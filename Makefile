@@ -3,6 +3,7 @@ all: konoha
 
 TMPDIR := tmp
 RM := rm -f
+CFLAGS=-Wall -Wextra
 
 konoha: konoha.o
 
