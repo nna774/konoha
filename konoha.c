@@ -8,6 +8,7 @@ typedef enum {
   AST_INT,
   AST_OP_PLUS,
   AST_OP_MINUS,
+  AST_OP_MULTI,
 
   AST_UNKNOWN,
 } Type;
@@ -91,6 +92,8 @@ Type detect_bi_op(char c) {
     return AST_OP_PLUS;
   case '-':
     return AST_OP_MINUS;
+  case '*':
+    return AST_OP_MULTI;
   default:
     return AST_UNKNOWN;
   }
@@ -105,6 +108,7 @@ Ast* parse(FILE* fp) {
     return ast;
   case '+':
   case '-':
+  case '*':
   {
     Type const t = detect_bi_op(c);
     skip(fp);
@@ -132,6 +136,8 @@ char const * op_from_type(Type t) {
     return "add";
   case AST_OP_MINUS:
     return "sub";
+  case AST_OP_MULTI:
+    return "imul";
   default:
     warn("wrong type\n");
     return ";";
@@ -146,6 +152,7 @@ void emit_ast(Ast const* ast) {
     break;
   case AST_OP_PLUS:
   case AST_OP_MINUS:
+  case AST_OP_MULTI:
   {
     char const * const op = op_from_type(t);
     emit_ast(ast->bi_op.rhs);
