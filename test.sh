@@ -1,14 +1,22 @@
-#! /bin/sh -x
+#! /bin/bash -x
 
-./konoha > tmp/out.s
-if [ $? != 0 ]; then
-    exit -1
-fi
-gcc tmp/out.s -o tmp/a.out
-if [ $? != 0 ]; then
-    exit -1
-fi
-./tmp/a.out
-if [ $? != 42 ]; then
-    exit -1
-fi
+test() {
+    expected="$1"
+    expr="$2"
+
+    echo "$expr" | ./konoha > tmp/out.s
+    if [ $? != 0 ]; then
+	exit -1
+    fi
+    gcc tmp/out.s driver.c -o tmp/a.out
+    if [ $? != 0 ]; then
+	exit -1
+    fi
+    res=`./tmp/a.out`
+    if [ "x$res" != "x$expected" ]; then
+	echo "Test failed: expected $expected, but got $res"
+	exit -1
+    fi
+}
+
+test "42" ""
