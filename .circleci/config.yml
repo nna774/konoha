@@ -1,0 +1,14 @@
+version: 2
+jobs:
+  gcc:
+    docker:
+      - image: gcc:latest
+    steps:
+      - checkout
+      - run: make all
+      - run: make test
+workflows:
+  version: 2
+  all:
+    jobs:
+      - gcc
