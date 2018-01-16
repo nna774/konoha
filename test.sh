@@ -1,4 +1,4 @@
-#! /bin/bash -x
+#! /bin/bash
 
 compile() {
     echo "$1" | ./konoha > tmp/out.s
