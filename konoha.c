@@ -16,8 +16,8 @@ struct Ast;
 typedef struct Ast Ast;
 
 typedef struct Bi_op {
-  Ast* lhs;
-  Ast* rhs;
+  Ast const* lhs;
+  Ast const* rhs;
 } Bi_op;
 
 struct Ast {
@@ -29,7 +29,7 @@ struct Ast {
 };
 
 int peek(FILE* fp) {
-  int c = getc(fp);
+  int const c = getc(fp);
   if(c == EOF) {
     return EOF;
   }
@@ -42,14 +42,14 @@ Ast* new_ast() {
 }
 
 Ast* make_ast_int(int n) {
-  Ast *ast = new_ast();
+  Ast* const ast = new_ast();
   ast->type = AST_INT;
   ast->int_val = n;
   return ast;
 }
 
-Ast* make_ast_bi_op(Type t, Ast* lhs, Ast* rhs) {
-  Ast *ast = new_ast();
+Ast* make_ast_bi_op(Type const t, Ast const* lhs, Ast const* rhs) {
+  Ast* const ast = new_ast();
   ast->type = t;
   ast->bi_op.lhs = lhs;
   ast->bi_op.rhs = rhs;
@@ -67,7 +67,7 @@ Ast* parse_int(FILE* fp) {
 }
 
 Ast* parse_prim(FILE* fp) {
-  Ast* ast = parse_int(fp);
+  Ast* const ast = parse_int(fp);
   return ast;
 }
 
@@ -93,18 +93,18 @@ Type detect_bi_op(char c) {
 }
 
 Ast* parse(FILE* fp) {
-  Ast* ast = parse_prim(fp);
+  Ast* const ast = parse_prim(fp);
   skip(fp);
-  int c = getc(fp);
+  int const c = getc(fp);
   switch(c) {
   case EOF:
     return ast;
   case '+':
   case '-':
   {
-    Type t = detect_bi_op(c);
+    Type const t = detect_bi_op(c);
     skip(fp);
-    Ast* rhs = parse_prim(fp);
+    Ast* const rhs = parse_prim(fp);
     return make_ast_bi_op(t, ast, rhs);
   }
   default:
@@ -115,11 +115,11 @@ Ast* parse(FILE* fp) {
 }
 
 Ast* make_ast() {
-  Ast* ast = parse(stdin);
+  Ast* const ast = parse(stdin);
   return ast;
 }
 
-void emit_int(Ast* ast) {
+void emit_int(Ast const* ast) {
   printf("mov $%d, %%rax\n", ast->int_val);
 }
 
@@ -134,8 +134,8 @@ char const * op_from_type(Type t) {
   }
 }
 
-void emit_ast(Ast* ast) {
-  Type t = ast->type;
+void emit_ast(Ast const* ast) {
+  Type const t = ast->type;
   switch(t) {
   case AST_INT:
     emit_int(ast);
@@ -155,7 +155,7 @@ void emit_ast(Ast* ast) {
   }
 }
 
-void emit(Ast* ast) {
+void emit(Ast const* ast) {
   assert(ast != NULL);
   printf("\t.text\n"
          "\t.global mymain\n"
@@ -164,7 +164,7 @@ void emit(Ast* ast) {
   printf("ret\n");
 }
 
-void print_ast(Ast* ast) {
+void print_ast(Ast const* ast) {
   assert(ast != NULL);
   switch(ast->type) {
   case AST_INT:
@@ -176,7 +176,7 @@ void print_ast(Ast* ast) {
 }
 
 int main(int argc, char** argv) {
-  Ast* ast = make_ast();
+  Ast* const ast = make_ast();
   if (argc > 1 && !strcmp(argv[1], "-a")) {
     print_ast(ast);
   } else {
