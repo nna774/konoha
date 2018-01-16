@@ -127,7 +127,7 @@ Ast* make_ast() {
 }
 
 void emit_int(Ast const* ast) {
-  printf("mov $%d, %%rax\n", ast->int_val);
+  printf("\tmov $%d, %%rax\n", ast->int_val);
 }
 
 char const * op_from_type(Type t) {
@@ -156,9 +156,9 @@ void emit_ast(Ast const* ast) {
   {
     char const * const op = op_from_type(t);
     emit_ast(ast->bi_op.rhs);
-    printf("mov %%eax, %%ebx\n");
+    printf("\tmov %%eax, %%ebx\n");
     emit_ast(ast->bi_op.lhs);
-    printf("%s %%ebx, %%eax\n", op);
+    printf("\t%s %%ebx, %%eax\n", op);
     break;
   }
   default:
@@ -172,7 +172,7 @@ void emit(Ast const* ast) {
          "\t.global mymain\n"
          "mymain:\n");
   emit_ast(ast);
-  printf("ret\n");
+  printf("\tret\n");
 }
 
 void print_ast(Ast const* ast) {
