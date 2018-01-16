@@ -7,6 +7,9 @@
 typedef enum {
   AST_INT,
   AST_OP_PLUS,
+  AST_OP_MINUS,
+
+  AST_UNKNOWN,
 } Type;
 
 struct Ast;
@@ -78,6 +81,17 @@ void skip(FILE* fp) {
   ungetc(c, fp);
 }
 
+Type detect_bi_op(char c) {
+  switch(c) {
+  case '+':
+    return AST_OP_PLUS;
+  case '-':
+    return AST_OP_MINUS;
+  default:
+    return AST_UNKNOWN;
+  }
+}
+
 Ast* parse(FILE* fp) {
   Ast* ast = parse_prim(fp);
   skip(fp);
@@ -86,8 +100,9 @@ Ast* parse(FILE* fp) {
   case EOF:
     return ast;
   case '+':
+  case '-':
   {
-    Type t = AST_OP_PLUS;
+    Type t = detect_bi_op(c);
     skip(fp);
     Ast* rhs = parse_prim(fp);
     return make_ast_bi_op(t, ast, rhs);
@@ -108,17 +123,33 @@ void emit_int(Ast* ast) {
   printf("mov $%d, %%rax\n", ast->int_val);
 }
 
+char const * op_from_type(Type t) {
+  switch(t) {
+  case AST_OP_PLUS:
+    return "add";
+  case AST_OP_MINUS:
+    return "sub";
+  default:
+    return ";";
+  }
+}
+
 void emit_ast(Ast* ast) {
-  switch(ast->type) {
+  Type t = ast->type;
+  switch(t) {
   case AST_INT:
     emit_int(ast);
     break;
   case AST_OP_PLUS:
-    emit_ast(ast->bi_op.lhs);
-    printf("mov %%eax, %%ebx\n");
+  case AST_OP_MINUS:
+  {
+    char const * const op = op_from_type(t);
     emit_ast(ast->bi_op.rhs);
-    printf("add %%ebx, %%eax\n");
+    printf("mov %%eax, %%ebx\n");
+    emit_ast(ast->bi_op.lhs);
+    printf("%s %%ebx, %%eax\n", op);
     break;
+  }
   default:
     puts("never come!!!");
   }
