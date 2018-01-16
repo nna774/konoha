@@ -10,4 +10,5 @@ clean:
 	$(RM) konoha *.o $(TMPDIR)/*
 
 test: konoha
+	mkdir -p $(TMPDIR)
 	./test.sh
