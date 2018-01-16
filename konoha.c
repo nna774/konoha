@@ -177,9 +177,19 @@ void emit(Ast const* ast) {
 
 void print_ast(Ast const* ast) {
   assert(ast != NULL);
-  switch(ast->type) {
+  Type const t = ast->type;
+  switch(t) {
   case AST_INT:
     printf("%d", ast->int_val);
+    break;
+  case AST_OP_PLUS:
+  case AST_OP_MINUS:
+  case AST_OP_MULTI:
+    printf("(%s ", op_from_type(t));
+    print_ast(ast->bi_op.lhs);
+    printf(" ");
+    print_ast(ast->bi_op.rhs);
+    printf(")");
     break;
   default:
     warn("never come!!!\n");
