@@ -37,6 +37,10 @@ int peek(FILE* fp) {
   return c;
 }
 
+void warn(char const* msg) {
+  fprintf(stderr, "%s", msg);
+}
+
 Ast* new_ast() {
   return malloc(sizeof(Ast));
 }
@@ -108,8 +112,7 @@ Ast* parse(FILE* fp) {
     return make_ast_bi_op(t, ast, rhs);
   }
   default:
-    printf("!!!%c!!!", c);
-    puts("never come!!!");
+    warn("never come!!!\n");
     return NULL;
   }
 }
@@ -130,6 +133,7 @@ char const * op_from_type(Type t) {
   case AST_OP_MINUS:
     return "sub";
   default:
+    warn("wrong type\n");
     return ";";
   }
 }
@@ -151,7 +155,7 @@ void emit_ast(Ast const* ast) {
     break;
   }
   default:
-    puts("never come!!!");
+    warn("never come!!!\n");
   }
 }
 
@@ -171,7 +175,7 @@ void print_ast(Ast const* ast) {
     printf("%d", ast->int_val);
     break;
   default:
-    puts("never come!!!");
+    warn("never come!!!\n");
   }
 }
 
