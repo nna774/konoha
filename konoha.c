@@ -4,6 +4,9 @@
 #include <string.h>
 #include <assert.h>
 
+int const true = 1;
+int const false = 0;
+
 typedef enum {
   AST_INT,
   AST_OP_PLUS,
@@ -100,25 +103,30 @@ Type detect_bi_op(char c) {
 }
 
 Ast* parse(FILE* fp) {
-  Ast* const ast = parse_prim(fp);
-  skip(fp);
-  int const c = getc(fp);
-  switch(c) {
-  case EOF:
-    return ast;
-  case '+':
-  case '-':
-  case '*':
-  {
-    Type const t = detect_bi_op(c);
+  Ast* ast = parse_prim(fp);
+  while(true) {
     skip(fp);
-    Ast* const rhs = parse_prim(fp);
-    return make_ast_bi_op(t, ast, rhs);
+    int const c = getc(fp);
+    switch(c) {
+    case EOF:
+      return ast;
+    case '+':
+    case '-':
+    case '*':
+    {
+      Type const t = detect_bi_op(c);
+      skip(fp);
+      Ast* const lhs = ast;
+      Ast* const rhs = parse_prim(fp);
+      ast = make_ast_bi_op(t, lhs, rhs);
+      break;
+    }
+    default:
+      warn("never come!!!\n");
+      return NULL;
+    }
   }
-  default:
-    warn("never come!!!\n");
-    return NULL;
-  }
+  return NULL; // never come
 }
 
 Ast* make_ast() {
@@ -151,16 +159,21 @@ void emit_ast(Ast const* ast) {
     emit_int(ast);
     break;
   case AST_OP_PLUS:
-  case AST_OP_MINUS:
   case AST_OP_MULTI:
   {
     char const * const op = op_from_type(t);
-    emit_ast(ast->bi_op.rhs);
-    printf("\tmov %%eax, %%ebx\n");
     emit_ast(ast->bi_op.lhs);
+    printf("\tmov %%eax, %%ebx\n");
+    emit_ast(ast->bi_op.rhs);
     printf("\t%s %%ebx, %%eax\n", op);
     break;
   }
+  case AST_OP_MINUS:
+    emit_ast(ast->bi_op.rhs);
+    printf("\tmov %%eax, %%ebx\n");
+    emit_ast(ast->bi_op.lhs);
+    printf("\tsub %%ebx, %%eax\n");
+    break;
   default:
     warn("never come!!!\n");
   }
