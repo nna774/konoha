@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <assert.h>
+#include <stdarg.h>
 
 int const true = 1;
 int const false = 0;
@@ -41,8 +42,11 @@ int peek(FILE* fp) {
   return c;
 }
 
-void warn(char const* msg) {
-  fprintf(stderr, "%s", msg);
+void warn(char const* fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  vfprintf(stderr, fmt, args);
+  va_end(args);
 }
 
 Ast* new_ast() {
