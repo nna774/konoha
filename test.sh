@@ -85,3 +85,6 @@ test_ast "(add (add 1 (imul 2 3)) 4)" "1+2*3+4"
 test "7" "1+2*3"
 test "17" "3*4+5"
 test "11" "1+2*3+4"
+
+test_ast "(let a 0)" "a=0"
+test_ast "(let a (add 1 2))" "a=1+2"
