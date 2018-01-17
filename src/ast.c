@@ -122,14 +122,14 @@ Ast* make_ast_statements(INTRUSIVE_LIST_OF(Statement) ss) {
   return ast;
 }
 
-Ast* parse_int(FILE* fp) {
+Ast* parse_int(FILE* fp, int sign) {
   int sum = 0;
   int c;
   while(c = getc(fp), isdigit(c)) {
     sum  = sum * 10 + (c - '0');
   }
   ungetc(c, fp);
-  return make_ast_int(sum);
+  return make_ast_int(sum * sign);
 }
 
 Ast* parse_symbol(FILE* fp, Env* env) {
@@ -160,7 +160,8 @@ Ast* parse_symbol(FILE* fp, Env* env) {
 Ast* parse_prim(FILE* fp, Env* env) {
   int const c = peek(fp);
   if(isdigit(c)) {
-    return parse_int(fp);
+    int const sign = 1;
+    return parse_int(fp, sign);
   } else if(isalpha(c)) {
     return parse_symbol(fp, env);
   } else if(c == '(') {
@@ -174,6 +175,14 @@ Ast* parse_prim(FILE* fp, Env* env) {
       return NULL;
     }
     return ast;
+  } else if(c == '+' || c == '-') {
+    getc(fp);
+    int const c2 = peek(fp);
+    if(isdigit(c2)) {
+      return parse_int(fp, c == '+' ? 1 : -1);
+    }
+    warn("unexpected char: %c(next to %c)\n", c2, c);
+    return NULL;
   } else {
     if(c == EOF) { warn("unexpected EOF\n"); }
     else { warn("unknown char: %c\n", c); }
