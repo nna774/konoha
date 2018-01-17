@@ -1,15 +1,22 @@
-all: konoha
-.PHONY: clean test
-
+include Makefile.common
 TMPDIR := tmp
-RM := rm -f
-CFLAGS := -Wall -Wextra
+SRCDIR := src
 
-konoha: konoha.o
+all: $(TARGET)
+$(TARGET): build
+	$(CP) $(SRCDIR)/$(TARGET) .
 
-clean:
-	$(RM) konoha *.o ./$(TMPDIR)/*
+build:
+	$(MAKE) -C $(SRCDIR) build
 
-test: konoha
+clean: clean_src
+	$(RM) $(TARGET) *.o ./$(TMPDIR)/*
+
+clean_src:
+	$(MAKE) -C $(SRCDIR) clean
+
+test: $(TARGET)
 	mkdir -p "$(TMPDIR)"
 	./test.sh
+
+.PHONY: clean clean_src test
