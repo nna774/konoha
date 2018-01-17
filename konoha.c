@@ -93,6 +93,19 @@ void skip(FILE* fp) {
   ungetc(c, fp);
 }
 
+int priority(char op) {
+  switch (op) {
+  case '+':
+  case '-':
+    return 1;
+  case '*':
+    return 2;
+  default:
+    warn("unknown bi-op");
+    return -1;
+  }
+}
+
 Type detect_bi_op(char c) {
   switch(c) {
   case '+':
@@ -106,7 +119,7 @@ Type detect_bi_op(char c) {
   }
 }
 
-Ast* parse(FILE* fp) {
+Ast* parse(FILE* fp, int prio) {
   Ast* ast = parse_prim(fp);
   while(true) {
     skip(fp);
@@ -121,7 +134,7 @@ Ast* parse(FILE* fp) {
       Type const t = detect_bi_op(c);
       skip(fp);
       Ast* const lhs = ast;
-      Ast* const rhs = parse_prim(fp);
+      Ast* const rhs = parse(fp, prio);
       ast = make_ast_bi_op(t, lhs, rhs);
       break;
     }
@@ -134,12 +147,13 @@ Ast* parse(FILE* fp) {
 }
 
 Ast* make_ast() {
-  Ast* const ast = parse(stdin);
+  int const prio = 0;
+  Ast* const ast = parse(stdin, prio);
   return ast;
 }
 
 void emit_int(Ast const* ast) {
-  printf("\tmov $%d, %%rax\n", ast->int_val);
+  printf("\tmov $%d, %%eax\n", ast->int_val);
 }
 
 char const * op_from_type(Type t) {
@@ -156,7 +170,7 @@ char const * op_from_type(Type t) {
   }
 }
 
-void emit_ast(Ast const* ast) {
+void emit_ast(Ast const* ast, int depth) {
   Type const t = ast->type;
   switch(t) {
   case AST_INT:
@@ -166,16 +180,17 @@ void emit_ast(Ast const* ast) {
   case AST_OP_MULTI:
   {
     char const * const op = op_from_type(t);
-    emit_ast(ast->bi_op.lhs);
-    printf("\tmov %%eax, %%ebx\n");
-    emit_ast(ast->bi_op.rhs);
-    printf("\t%s %%ebx, %%eax\n", op);
+    int const offset = depth * 4;
+    emit_ast(ast->bi_op.lhs, depth + 1);
+    printf("\tmov %%eax, -%d(%%rbp)\n", offset);
+    emit_ast(ast->bi_op.rhs, depth + 2);
+    printf("\t%s -%d(%%rbp), %%eax\n", op, offset);
     break;
   }
   case AST_OP_MINUS:
-    emit_ast(ast->bi_op.rhs);
+    emit_ast(ast->bi_op.rhs, depth + 1);
     printf("\tmov %%eax, %%ebx\n");
-    emit_ast(ast->bi_op.lhs);
+    emit_ast(ast->bi_op.lhs, depth + 2);
     printf("\tsub %%ebx, %%eax\n");
     break;
   default:
@@ -185,10 +200,15 @@ void emit_ast(Ast const* ast) {
 
 void emit(Ast const* ast) {
   assert(ast != NULL);
-  printf("\t.text\n"
-         "\t.global mymain\n"
-         "mymain:\n");
-  emit_ast(ast);
+  printf(
+    "\t.text\n"
+    "\t.global mymain\n"
+    "mymain:\n"
+    "\tpushq %%rbp\n"
+    "\tmovq %%rsp, %%rbp\n"
+  );
+  emit_ast(ast, 1);
+  printf("\tpopq %%rbp\n");
   printf("\tret\n");
 }
 
