@@ -24,6 +24,7 @@
 #define USE_INTRUSIVE_LIST(Type) \
   void list_of_ ## Type ## _append(INTRUSIVE_LIST_OF(Type) l, Type* app) {\
     assert(l != NULL);\
+    assert(app != NULL);\
 \
     l->count++;\
     app->_hook.next = NULL;\
@@ -34,8 +35,8 @@
     }\
     Type* pre;\
     while(v != NULL) {\
-      v = v->_hook.next;\
       pre = v;\
+      v = v->_hook.next;\
     }\
     pre->_hook.next = app;\
   }\
