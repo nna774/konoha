@@ -131,10 +131,15 @@ Ast* parse(FILE* fp, int prio) {
     case '-':
     case '*':
     {
+      int const c_prio = priority(c);
+      if(c_prio < prio) {
+        ungetc(c, fp);
+        return ast;
+      }
       Type const t = detect_bi_op(c);
       skip(fp);
       Ast* const lhs = ast;
-      Ast* const rhs = parse(fp, prio);
+      Ast* const rhs = parse(fp, c_prio + 1);
       ast = make_ast_bi_op(t, lhs, rhs);
       break;
     }
