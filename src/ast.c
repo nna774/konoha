@@ -231,8 +231,7 @@ Ast* parse_expr(FILE* fp, Env* env, int prio) {
     }
     case '=':
     {
-      warn("add %s", ast->var->name);
-      ast->var->offset = (list_of_Var_length(env->vars) + 1) * 4;
+      ast->var->offset = list_of_Var_length(env->vars) * 4;
       skip(fp);
       Ast* const lhs = ast;
       Ast* const rhs = parse_expr(fp, env, prio);

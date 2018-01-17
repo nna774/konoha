@@ -61,7 +61,7 @@ void emit(Ast const* ast, Env const* env) {
     "\tpushq %%rbp\n"
     "\tmovq %%rsp, %%rbp\n"
   );
-  emit_ast(ast, env, 1);
+  emit_ast(ast, env, list_of_Var_length(env->vars) + 1);
   printf("\tpopq %%rbp\n");
   printf("\tret\n");
 }
