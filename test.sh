@@ -82,6 +82,8 @@ test_ast "(let a 0)" "a=0;"
 test_ast "(let a (add 1 2))" "a=1+2;"
 test_ast "(let a 0)(let b 0)" "a=0;b=0;"
 
+test_ast "(let a 1)(let b 2)(add (add (imul a b) (imul a 3)) (imul b 2))" "a=1;b=2;a*b+a*3+b*2;"
+
 test "0" "0;"
 test "42" "42;"
 test "100" "100;"
