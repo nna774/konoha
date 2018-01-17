@@ -5,6 +5,9 @@
 #include <string.h>
 #include "ast.h"
 #include "utils.h"
+
+Ast* parse_expr(FILE* fp, Env* env, int prio);
+
 #define DEFINE_NEW(T) \
   T* new_ ## T() {\
     return malloc(sizeof(T));\
@@ -160,6 +163,17 @@ Ast* parse_prim(FILE* fp, Env* env) {
     return parse_int(fp);
   } else if(isalpha(c)) {
     return parse_symbol(fp, env);
+  } else if(c == '(') {
+    getc(fp);
+    int const prio = 0;
+    Ast* const ast = parse_expr(fp, env, prio);
+    int const c = getc(fp);
+    if(c != ')') {
+      if(c == EOF) { warn("unterminated expr(got unexpeced EOF)\n"); }
+      else { warn("unterminated expr(got %c)\n", c); }
+      return NULL;
+    }
+    return ast;
   } else {
     if(c == EOF) { warn("unexpected EOF\n"); }
     else { warn("unknown char: %c\n", c); }
@@ -239,8 +253,9 @@ Ast* parse_expr(FILE* fp, Env* env, int prio) {
       break;
     }
     case ';':
+    case ')':
     {
-      ungetc(';', fp);
+      ungetc(c, fp);
       return ast;
     }
     case EOF:
