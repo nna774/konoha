@@ -3,51 +3,8 @@
 #include <ctype.h>
 #include <string.h>
 #include <assert.h>
-#include <stdarg.h>
-
-int const true = 1;
-int const false = 0;
-
-typedef enum {
-  AST_INT,
-  AST_OP_PLUS,
-  AST_OP_MINUS,
-  AST_OP_MULTI,
-
-  AST_UNKNOWN,
-} Type;
-
-struct Ast;
-typedef struct Ast Ast;
-
-typedef struct Bi_op {
-  Ast const* lhs;
-  Ast const* rhs;
-} Bi_op;
-
-struct Ast {
-  Type type;
-  union {
-    int int_val;
-    Bi_op bi_op;
-  };
-};
-
-int peek(FILE* fp) {
-  int const c = getc(fp);
-  if(c == EOF) {
-    return EOF;
-  }
-  ungetc(c, fp);
-  return c;
-}
-
-void warn(char const* fmt, ...) {
-  va_list args;
-  va_start(args, fmt);
-  vfprintf(stderr, fmt, args);
-  va_end(args);
-}
+#include "ast.h"
+#include "utils.h"
 
 Ast* new_ast() {
   return malloc(sizeof(Ast));
