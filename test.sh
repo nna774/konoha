@@ -22,6 +22,10 @@ test() {
 
     compile "$expr"
     res=`./tmp/a.out`
+    if [ $? != 0 ]; then
+	echo "execution fail"
+	exit -1
+    fi
     if [ "x$res" != "x$expected" ]; then
 	echo "Test failed: expected $expected, but got $res"
 	exit -1
@@ -34,6 +38,10 @@ test_ast() {
     : test_ast "expected $expected, expr $expr"
 
     res=`echo "$expr" | "$konoha" -a`
+    if [ $? != 0 ]; then
+	echo "execution fail"
+	exit -1
+    fi
     if [ "x$res" != "x$expected" ]; then
 	echo "Test failed: expected $expected, but got $res"
 	exit -1
