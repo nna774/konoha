@@ -13,6 +13,7 @@ typedef enum {
   AST_STATEMENT,
   AST_STATEMENTS,
 
+  AST_EMPTY,
   AST_UNKNOWN = 999,
 } Type;
 
@@ -51,7 +52,7 @@ struct Statement {
 };
 
 struct Statements {
-  INTRUSIVE_LIST_OF(Statement) statements;
+  INTRUSIVE_LIST_OF(Statement) val;
 };
 
 struct Ast {

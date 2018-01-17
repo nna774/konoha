@@ -32,6 +32,12 @@ Statement* new_Statement() {
   return s;
 }
 
+Statements* new_Statements() {
+  Statements* s = malloc(sizeof(Statements));
+  s->val = NULL;
+  return s;
+}
+
 int const MAX_BUF_LEN = 256;
 
 char const * op_from_type(Type t) {
@@ -71,11 +77,24 @@ Ast* make_ast_bi_op(Type const t, Ast const* lhs, Ast const* rhs) {
   return ast;
 }
 
-Ast* make_ast_statement(Ast* st) {
+Statement* make_statement(Ast* st) {
+  Statement* const s = new_Statement();
+  s->val = st;
+  return s;
+}
+
+Ast* make_ast_statement(Statement* s) {
   Ast* const ast = new_Ast();
   ast->type = AST_STATEMENT;
-  ast->statement = new_Statement();
-  ast->statement->val = st;
+  ast->statement = s;
+  return ast;
+}
+
+Ast* make_ast_statements(INTRUSIVE_LIST_OF(Statement) ss) {
+  Ast* const ast = new_Ast();
+  ast->type = AST_STATEMENTS;
+  ast->statements = new_Statements();
+  ast->statements->val = ss;
   return ast;
 }
 
@@ -107,16 +126,15 @@ Ast* parse_symbol(FILE* fp) {
 
 Ast* parse_prim(FILE* fp) {
   int const c = peek(fp);
-  Ast* ast;
   if(isdigit(c)) {
-    ast = parse_int(fp);
+    return parse_int(fp);
   } else if(isalpha(c)) {
-    ast = parse_symbol(fp);
+    return parse_symbol(fp);
   } else {
-    warn("unknown char: %c\n", c);
-    ast = NULL;
+    if(c == EOF) { warn("unexpected EOF\n"); }
+    else { warn("unknown char: %c\n", c); }
+    return NULL;
   }
-  return ast;
 }
 
 void skip(FILE* fp) {
@@ -157,12 +175,11 @@ Type detect_bi_op(char c) {
 
 Ast* parse_expr(FILE* fp, Env* env, int prio) {
   Ast* ast = parse_prim(fp);
+  assert(ast != NULL);
   while(true) {
     skip(fp);
     int const c = getc(fp);
     switch(c) {
-    case EOF:
-      return ast;
     case '+':
     case '-':
     case '*':
@@ -193,6 +210,9 @@ Ast* parse_expr(FILE* fp, Env* env, int prio) {
       ungetc(';', fp);
       return ast;
     }
+    case EOF:
+      warn("unexpected EOF\n");
+      return ast;
     default:
       warn("never come!!!(got: %c)\n", c);
       return NULL;
@@ -202,22 +222,43 @@ Ast* parse_expr(FILE* fp, Env* env, int prio) {
   return NULL; // never come
 }
 
-Ast* parse_statement(FILE* fp, Env* env) {
+Statement* parse_statement(FILE* fp, Env* env) {
+  {
+    int const c = getc(fp);
+    if(c == ';') { // empty statement
+      Ast* const ast = new_Ast();
+      ast->type = AST_EMPTY;
+      return make_statement(ast);
+    } else {
+      ungetc(c, fp);
+    }
+  }
   int const prio = 0;
   Ast* const ast = parse_expr(fp, env, prio);
+  assert(ast != NULL);
   skip(fp);
+
   int const c = getc(fp);
   if(c != ';') {
     if(c == EOF) { warn("unterminated expr(got unexpeced EOF)\n"); }
     else { warn("unterminated expr(got %c)\n", c); }
     return NULL;
   }
-  return make_ast_statement(ast);
+
+  return make_statement(ast);
 }
 
 Ast* parse(FILE* fp, Env* env) {
-  Ast* const ast = parse_statement(fp, env);
-  return ast;
+  INTRUSIVE_LIST_OF(Statement) ss = new_list_of_Statement();
+  int c;
+  while(c = peek(fp), c != EOF) {
+    skip(fp);
+    Statement* s = parse_statement(fp, env);
+    skip(fp);
+    assert(s != NULL);
+    list_of_Statement_append(ss, s);
+  }
+  return make_ast_statements(ss);
 }
 
 Ast* make_ast(Env* env) {
@@ -254,6 +295,11 @@ void print_ast(Ast const* ast) {
   case AST_STATEMENT:
     print_ast(ast->statement->val);
     puts("");
+    break;
+  case AST_STATEMENTS:
+    FOREACH(Statement, ast->statements->val, s) {
+      print_ast(make_ast_statement(s));
+    }
     break;
   default:
     warn("never come!!!(type: %d)\n", t);
