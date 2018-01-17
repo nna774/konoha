@@ -150,6 +150,7 @@ Ast* parse_symbol(FILE* fp, Env* env) {
 
   Ast* const ast = make_ast_symbol(buf);
   list_of_Var_append(env->vars, ast->var);
+  ast->var->offset = list_of_Var_length(env->vars) * 4;
   return ast;
 }
 
@@ -231,7 +232,6 @@ Ast* parse_expr(FILE* fp, Env* env, int prio) {
     }
     case '=':
     {
-      ast->var->offset = list_of_Var_length(env->vars) * 4;
       skip(fp);
       Ast* const lhs = ast;
       Ast* const rhs = parse_expr(fp, env, prio);
