@@ -51,3 +51,5 @@
     t->_hook.next = NULL;\
   }\
 
+#define FOREACH(Type, list, val) \
+  for(Type* val = list->head; val != NULL; val = val->_hook.next)
