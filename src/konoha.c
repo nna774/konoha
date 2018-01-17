@@ -32,7 +32,7 @@ void emit_ast(Ast const* ast, int depth) {
     printf("\tsub %%ebx, %%eax\n");
     break;
   default:
-    warn("never come!!!\n");
+    warn("never come!!!(type: %d)\n", t);
   }
 }
 

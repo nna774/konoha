@@ -14,7 +14,7 @@ char const * op_from_type(Type t) {
   case AST_OP_MULTI:
     return "imul";
   default:
-    warn("wrong type\n");
+    warn("wrong type(%d)\n", t);
     return ";";
   }
 }
@@ -71,7 +71,7 @@ int priority(char op) {
   case '*':
     return 2;
   default:
-    warn("unknown bi-op");
+    warn("unknown bi-op(got: %c)", op);
     return -1;
   }
 }
@@ -114,7 +114,7 @@ Ast* parse(FILE* fp, int prio) {
       break;
     }
     default:
-      warn("never come!!!\n");
+      warn("never come!!!(got: %c)\n", c);
       return NULL;
     }
   }
@@ -144,7 +144,7 @@ void print_ast(Ast const* ast) {
     printf(")");
     break;
   default:
-    warn("never come!!!\n");
+    warn("never come!!!(type: %d)\n", t);
   }
 }
 
