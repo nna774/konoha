@@ -140,7 +140,7 @@ Type detect_bi_op(char c) {
   }
 }
 
-Ast* parse(FILE* fp, Env* env, int prio) {
+Ast* parse_expr(FILE* fp, Env* env, int prio) {
   Ast* ast = parse_prim(fp);
   while(true) {
     skip(fp);
@@ -160,7 +160,7 @@ Ast* parse(FILE* fp, Env* env, int prio) {
       Type const t = detect_bi_op(c);
       skip(fp);
       Ast* const lhs = ast;
-      Ast* const rhs = parse(fp, env, c_prio + 1);
+      Ast* const rhs = parse_expr(fp, env, c_prio + 1);
       ast = make_ast_bi_op(t, lhs, rhs);
       break;
     }
@@ -169,9 +169,14 @@ Ast* parse(FILE* fp, Env* env, int prio) {
       list_of_Var_append(env->vars, ast->var);
       skip(fp);
       Ast* const lhs = ast;
-      Ast* const rhs = parse(fp, env, prio);
+      Ast* const rhs = parse_expr(fp, env, prio);
       ast = make_ast_bi_op(AST_OP_ASSIGN, lhs, rhs);
       break;
+    }
+    case ';':
+    {
+      ungetc(';', fp);
+      return ast;
     }
     default:
       warn("never come!!!(got: %c)\n", c);
@@ -182,9 +187,21 @@ Ast* parse(FILE* fp, Env* env, int prio) {
   return NULL; // never come
 }
 
-Ast* make_ast(Env* env) {
+Ast* parse(FILE* fp, Env* env) {
   int const prio = 0;
-  Ast* const ast = parse(stdin, env, prio);
+  Ast* ast = parse_expr(fp, env, prio);
+  skip(fp);
+  int const c = getc(fp);
+  if(c != ';') {
+    if(c == EOF) { warn("unterminated expr(got unexpeced EOF)\n"); }
+    else { warn("unterminated expr(got %c)\n", c); }
+    return NULL;
+  }
+  return ast;
+}
+
+Ast* make_ast(Env* env) {
+  Ast* const ast = parse(stdin, env);
   return ast;
 }
 
