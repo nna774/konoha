@@ -26,6 +26,7 @@
     assert(l != NULL);\
 \
     l->count++;\
+    app->_hook.next = NULL;\
     Type* v = l->head;\
     if (v == NULL) {\
       l->head = app;\
@@ -36,7 +37,6 @@
       v = v->_hook.next;\
       pre = v;\
     }\
-    app->_hook.next = NULL;\
     pre->_hook.next = app;\
   }\
 \
@@ -52,4 +52,5 @@
   }\
 
 #define FOREACH(Type, list, val) \
+  assert(list->head != NULL);\
   for(Type* val = list->head; val != NULL; val = val->_hook.next)
