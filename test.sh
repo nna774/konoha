@@ -66,6 +66,7 @@ test_ast "(add 42 42)" "42
 test_ast "(sub 0 0)" "0-0;"
 test_ast "(sub 2 1)" "2-1;"
 test_ast "(sub 1 2)" "1-2;"
+test_ast "(sub (sub (sub 1 2) 3) 4)" "1-2-3-4;"
 
 test_ast "(imul 0 0)" "0*0;"
 test_ast "(imul 1 2)" "1*2;"
@@ -106,6 +107,7 @@ test "84" "42
 test "0" "0-0;"
 test "1" "2-1;"
 test "-1" "1-2;"
+test "-8" "1-2-3-4;"
 
 test "0" "0*0;"
 test "2" "1*2;"

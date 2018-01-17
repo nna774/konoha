@@ -26,11 +26,14 @@ void emit_ast(Ast const* ast, Env const* env, int depth) {
     break;
   }
   case AST_OP_MINUS:
+  {
+    int const offset = depth * 4;
     emit_ast(ast->bi_op.rhs, env, depth + 1);
-    printf("\tmov %%eax, %%ebx\n");
+    printf("\tmov %%eax, -%d(%%rbp)\n", offset);
     emit_ast(ast->bi_op.lhs, env, depth + 2);
-    printf("\tsub %%ebx, %%eax\n");
+    printf("\tsub -%d(%%rbp), %%eax\n", offset);
     break;
+  }
   case AST_OP_ASSIGN:
     emit_ast(ast->bi_op.rhs, env, depth + 1);
     printf("\tmov %%eax, -%d(%%rbp)\n", ast->bi_op.lhs->var->offset);
