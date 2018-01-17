@@ -34,8 +34,12 @@ void emit_ast(Ast const* ast, Env const* env, int depth) {
   case AST_OP_ASSIGN:
     printf("assing");
     break;
+  case AST_STATEMENT:
+    emit_ast(ast->statement->val, env, depth);
+    break;
   default:
     warn("never come!!!(type: %d)\n", t);
+    break;
   }
 }
 

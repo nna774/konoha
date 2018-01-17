@@ -10,6 +10,8 @@ typedef enum {
   AST_OP_MULTI,
   AST_OP_ASSIGN,
   AST_SYM,
+  AST_STATEMENT,
+  AST_STATEMENTS,
 
   AST_UNKNOWN = 999,
 } Type;
@@ -20,8 +22,13 @@ struct Var;
 typedef struct Var Var;
 struct Env;
 typedef struct Env Env;
+struct Statement;
+typedef struct Statement Statement;
+struct Statements;
+typedef struct Statements Statements;
 
 DEFINE_INTRUSIVE_LIST(Var);
+DEFINE_INTRUSIVE_LIST(Statement);
 
 typedef struct Bi_op {
   Ast const* lhs;
@@ -38,12 +45,23 @@ struct Env {
   INTRUSIVE_LIST_OF(Var) vars;
 };
 
+struct Statement {
+  Ast* val;
+  INTRUSIVE_LIST_HOOK(Statement);
+};
+
+struct Statements {
+  INTRUSIVE_LIST_OF(Statement) statements;
+};
+
 struct Ast {
   Type type;
   union {
     int int_val;
     Bi_op bi_op;
     Var* var;
+    Statement* statement;
+    Statements* statements;
   };
 };
 

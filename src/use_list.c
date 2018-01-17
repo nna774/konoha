@@ -3,3 +3,4 @@
 #include "ast.h"
 
 USE_INTRUSIVE_LIST(Var);
+USE_INTRUSIVE_LIST(Statement);

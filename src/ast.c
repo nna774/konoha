@@ -25,6 +25,13 @@ Var* new_Var() {
   return v;
 }
 
+Statement* new_Statement() {
+  Statement* s = malloc(sizeof(Statement));
+  s->val = NULL;
+  init_Statement_hook(s);
+  return s;
+}
+
 int const MAX_BUF_LEN = 256;
 
 char const * op_from_type(Type t) {
@@ -61,6 +68,14 @@ Ast* make_ast_bi_op(Type const t, Ast const* lhs, Ast const* rhs) {
   ast->type = t;
   ast->bi_op.lhs = lhs;
   ast->bi_op.rhs = rhs;
+  return ast;
+}
+
+Ast* make_ast_statement(Ast* st) {
+  Ast* const ast = new_Ast();
+  ast->type = AST_STATEMENT;
+  ast->statement = new_Statement();
+  ast->statement->val = st;
   return ast;
 }
 
@@ -187,9 +202,9 @@ Ast* parse_expr(FILE* fp, Env* env, int prio) {
   return NULL; // never come
 }
 
-Ast* parse(FILE* fp, Env* env) {
+Ast* parse_statement(FILE* fp, Env* env) {
   int const prio = 0;
-  Ast* ast = parse_expr(fp, env, prio);
+  Ast* const ast = parse_expr(fp, env, prio);
   skip(fp);
   int const c = getc(fp);
   if(c != ';') {
@@ -197,6 +212,11 @@ Ast* parse(FILE* fp, Env* env) {
     else { warn("unterminated expr(got %c)\n", c); }
     return NULL;
   }
+  return make_ast_statement(ast);
+}
+
+Ast* parse(FILE* fp, Env* env) {
+  Ast* const ast = parse_statement(fp, env);
   return ast;
 }
 
@@ -230,6 +250,10 @@ void print_ast(Ast const* ast) {
     printf(" ");
     print_ast(ast->bi_op.rhs);
     printf(")");
+    break;
+  case AST_STATEMENT:
+    print_ast(ast->statement->val);
+    puts("");
     break;
   default:
     warn("never come!!!(type: %d)\n", t);
