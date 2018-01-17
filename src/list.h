@@ -53,5 +53,4 @@
   }\
 
 #define FOREACH(Type, list, val) \
-  assert(list->head != NULL);\
   for(Type* val = list->head; val != NULL; val = val->_hook.next)
