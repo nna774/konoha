@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 
+typedef int bool;
 int const true;
 int const false;
 
