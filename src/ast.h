@@ -26,4 +26,8 @@ struct Ast {
   };
 };
 
+Ast* make_ast();
+void print_ast(Ast const* ast);
+char const * op_from_type(Type t);
+
 #endif // NNA774_KONOHA_AST_H
