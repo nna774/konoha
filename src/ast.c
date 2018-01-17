@@ -181,8 +181,14 @@ Ast* parse_prim(FILE* fp, Env* env) {
     if(isdigit(c2)) {
       return parse_int(fp, c == '+' ? 1 : -1);
     }
-    warn("unexpected char: %c(next to %c)\n", c2, c);
-    return NULL;
+    int const prio = 0;
+    Ast* const subseq = parse_expr(fp, env, prio);
+    if(c == '+') {
+      return subseq;
+    }
+    // -
+    Ast* const neg = make_ast_int(-1);
+    return make_ast_bi_op(AST_OP_MULTI, neg, subseq);
   } else {
     if(c == EOF) { warn("unexpected EOF\n"); }
     else { warn("unknown char: %c\n", c); }
