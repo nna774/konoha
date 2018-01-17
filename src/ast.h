@@ -38,6 +38,7 @@ typedef struct Bi_op {
 
 struct Var {
   char const* name;
+  int offset;
   INTRUSIVE_LIST_HOOK(Var);
 };
 

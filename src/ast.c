@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <assert.h>
+#include <string.h>
 #include "ast.h"
 #include "utils.h"
 #define DEFINE_NEW(T) \
@@ -21,7 +22,14 @@ Env* new_Env() {
 Var* new_Var() {
   Var* v = malloc(sizeof(Var));
   v->name = NULL;
+  v->offset = 0;
   init_Var_hook(v);
+  return v;
+}
+
+Var* copy_var(Var const* _v) {
+  Var* v = malloc(sizeof(Var));
+  memcpy(v, _v, sizeof(Var));
   return v;
 }
 
@@ -83,11 +91,24 @@ Statement* make_statement(Ast* st) {
   return s;
 }
 
-Ast* make_ast_statement(Statement* s) {
+Ast* to_ast(Type t, void* v) {
   Ast* const ast = new_Ast();
-  ast->type = AST_STATEMENT;
-  ast->statement = s;
+  ast->type = t;
+  switch(t) {
+  case AST_SYM:
+    ast->var = v;
+    break;
+  case AST_STATEMENT:
+    ast->statement = v;
+    break;
+  default:
+    warn("unimpled type(%d)", t);
+  }
   return ast;
+}
+
+Ast* make_ast_statement(Statement* s) {
+  return to_ast(AST_STATEMENT, s);
 }
 
 Ast* make_ast_statements(INTRUSIVE_LIST_OF(Statement) ss) {
@@ -108,7 +129,7 @@ Ast* parse_int(FILE* fp) {
   return make_ast_int(sum);
 }
 
-Ast* parse_symbol(FILE* fp) {
+Ast* parse_symbol(FILE* fp, Env* env) {
   char* const buf = malloc(MAX_BUF_LEN);
   int c;
   int at = 0;
@@ -121,15 +142,23 @@ Ast* parse_symbol(FILE* fp) {
   }
   ungetc(c, fp);
   buf[at] = '\0';
-  return make_ast_symbol(buf);
+  FOREACH(Var, env->vars, v) {
+    if(!strcmp(v->name, buf)) {
+      return to_ast(AST_SYM, copy_var(v));
+    }
+  }
+
+  Ast* const ast = make_ast_symbol(buf);
+  list_of_Var_append(env->vars, ast->var);
+  return ast;
 }
 
-Ast* parse_prim(FILE* fp) {
+Ast* parse_prim(FILE* fp, Env* env) {
   int const c = peek(fp);
   if(isdigit(c)) {
     return parse_int(fp);
   } else if(isalpha(c)) {
-    return parse_symbol(fp);
+    return parse_symbol(fp, env);
   } else {
     if(c == EOF) { warn("unexpected EOF\n"); }
     else { warn("unknown char: %c\n", c); }
@@ -173,8 +202,12 @@ Type detect_bi_op(char c) {
   }
 }
 
+bool compare_with_name(Var* lhs, Var* rhs) {
+  return !strcmp(lhs->name, rhs->name);
+}
+
 Ast* parse_expr(FILE* fp, Env* env, int prio) {
-  Ast* ast = parse_prim(fp);
+  Ast* ast = parse_prim(fp, env);
   assert(ast != NULL);
   while(true) {
     skip(fp);
@@ -198,7 +231,8 @@ Ast* parse_expr(FILE* fp, Env* env, int prio) {
     }
     case '=':
     {
-      list_of_Var_append(env->vars, ast->var);
+      warn("add %s", ast->var->name);
+      ast->var->offset = (list_of_Var_length(env->vars) + 1) * 4;
       skip(fp);
       Ast* const lhs = ast;
       Ast* const rhs = parse_expr(fp, env, prio);

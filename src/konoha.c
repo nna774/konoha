@@ -32,7 +32,11 @@ void emit_ast(Ast const* ast, Env const* env, int depth) {
     printf("\tsub %%ebx, %%eax\n");
     break;
   case AST_OP_ASSIGN:
-    printf("assing");
+    emit_ast(ast->bi_op.rhs, env, depth + 1);
+    printf("\tmov %%eax, -%d(%%rbp)\n", ast->bi_op.lhs->var->offset);
+    break;
+  case AST_SYM:
+    printf("\tmov -%d(%%rbp), %%eax\n", ast->var->offset);
     break;
   case AST_STATEMENT:
     emit_ast(ast->statement->val, env, depth);
