@@ -294,7 +294,6 @@ void print_ast(Ast const* ast) {
     break;
   case AST_STATEMENT:
     print_ast(ast->statement->val);
-    puts("");
     break;
   case AST_STATEMENTS:
     FOREACH(Statement, ast->statements->val, s) {

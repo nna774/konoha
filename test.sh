@@ -54,6 +54,8 @@ test_ast "100" "100;"
 
 test_ast "0" "    0     ;"
 
+# test_ast "0;1" "0;1;" admitted
+
 test_ast "(add 0 0)" "0+0;"
 test_ast "(add 1 2)" "1+2;"
 test_ast "(add 100 200)" "100 +     200;"
@@ -78,10 +80,13 @@ test_ast "(add (add 1 (imul 2 3)) 4)" "1+2*3+4;"
 
 test_ast "(let a 0)" "a=0;"
 test_ast "(let a (add 1 2))" "a=1+2;"
+test_ast "(let a 0)(let b 0)" "a=0;b=0;"
 
 test "0" "0;"
 test "42" "42;"
 test "100" "100;"
+
+test "1" "0;1;"
 
 test "0" "0+0;"
 test "3" "1+2;"
