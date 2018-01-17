@@ -52,6 +52,8 @@ test_ast "0" "0;"
 test_ast "42" "42;"
 test_ast "100" "100;"
 
+test_ast "0" "    0     ;"
+
 test_ast "(add 0 0)" "0+0;"
 test_ast "(add 1 2)" "1+2;"
 test_ast "(add 100 200)" "100 +     200;"
