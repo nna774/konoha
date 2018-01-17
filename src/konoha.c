@@ -8,7 +8,7 @@ void emit_int(Ast const* ast) {
   printf("\tmov $%d, %%eax\n", ast->int_val);
 }
 
-void emit_ast(Ast const* ast, int depth) {
+void emit_ast(Ast const* ast, Env const* env, int depth) {
   Type const t = ast->type;
   switch(t) {
   case AST_INT:
@@ -19,24 +19,27 @@ void emit_ast(Ast const* ast, int depth) {
   {
     char const * const op = op_from_type(t);
     int const offset = depth * 4;
-    emit_ast(ast->bi_op.lhs, depth + 1);
+    emit_ast(ast->bi_op.lhs, env, depth + 1);
     printf("\tmov %%eax, -%d(%%rbp)\n", offset);
-    emit_ast(ast->bi_op.rhs, depth + 2);
+    emit_ast(ast->bi_op.rhs, env, depth + 2);
     printf("\t%s -%d(%%rbp), %%eax\n", op, offset);
     break;
   }
   case AST_OP_MINUS:
-    emit_ast(ast->bi_op.rhs, depth + 1);
+    emit_ast(ast->bi_op.rhs, env, depth + 1);
     printf("\tmov %%eax, %%ebx\n");
-    emit_ast(ast->bi_op.lhs, depth + 2);
+    emit_ast(ast->bi_op.lhs, env, depth + 2);
     printf("\tsub %%ebx, %%eax\n");
+    break;
+  case AST_OP_ASSIGN:
+    printf("assing");
     break;
   default:
     warn("never come!!!(type: %d)\n", t);
   }
 }
 
-void emit(Ast const* ast) {
+void emit(Ast const* ast, Env const* env) {
   assert(ast != NULL);
   printf(
     "\t.text\n"
@@ -45,17 +48,23 @@ void emit(Ast const* ast) {
     "\tpushq %%rbp\n"
     "\tmovq %%rsp, %%rbp\n"
   );
-  emit_ast(ast, 1);
+  emit_ast(ast, env, 1);
   printf("\tpopq %%rbp\n");
   printf("\tret\n");
 }
 
 int main(int argc, char** argv) {
-  Ast* const ast = make_ast();
+  Env* env = new_Env();
+  Ast* const ast = make_ast(env);
   if (argc > 1 && !strcmp(argv[1], "-a")) {
     print_ast(ast);
+  } else if (argc > 1 && !strcmp(argv[1], "-d")) {
+    printf("ast:\n");
+    print_ast(ast);
+    printf("\nenv:\n");
+    print_env(env);
   } else {
-    emit(ast);
+    emit(ast, env);
   }
   return 0;
 }

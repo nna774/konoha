@@ -47,8 +47,10 @@ struct Ast {
   };
 };
 
-Ast* make_ast();
-void print_ast(Ast const* ast);
+Env* new_Env();
+Ast* make_ast(Env*);
+void print_ast(Ast const*);
+void print_env(Env const*);
 char const * op_from_type(Type t);
 
 #endif // NNA774_KONOHA_AST_H

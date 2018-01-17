@@ -182,9 +182,8 @@ Ast* parse(FILE* fp, Env* env, int prio) {
   return NULL; // never come
 }
 
-Ast* make_ast() {
+Ast* make_ast(Env* env) {
   int const prio = 0;
-  Env* env = new_Env();
   Ast* const ast = parse(stdin, env, prio);
   return ast;
 }
@@ -220,3 +219,13 @@ void print_ast(Ast const* ast) {
   }
 }
 
+void print_env(Env const* env) {
+  assert(env != NULL);
+  if(env->parent != NULL) {
+    printf("parent:");
+    print_env(env->parent);
+  }
+  FOREACH(Var, env->vars, v) {
+    printf("%s\n", v->name);
+  }
+}
