@@ -68,6 +68,7 @@ struct Ast {
 
 Env* new_Env();
 Ast* make_ast(Env*);
+Ast* make_ast_statement(Statement*);
 void print_ast(Ast const*);
 void print_env(Env const*);
 char const * op_from_type(Type t);

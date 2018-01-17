@@ -37,6 +37,11 @@ void emit_ast(Ast const* ast, Env const* env, int depth) {
   case AST_STATEMENT:
     emit_ast(ast->statement->val, env, depth);
     break;
+  case AST_STATEMENTS:
+    FOREACH(Statement, ast->statements->val, s) {
+      emit_ast(make_ast_statement(s), env, depth);
+    }
+    break;
   default:
     warn("never come!!!(type: %d)\n", t);
     break;
