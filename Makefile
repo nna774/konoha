@@ -17,6 +17,6 @@ clean_src:
 
 test: $(TARGET)
 	mkdir -p "$(TMPDIR)"
-	./test.sh
+	CC=$(CC) ./test.sh
 
 .PHONY: clean clean_src test

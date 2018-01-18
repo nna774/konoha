@@ -8,9 +8,9 @@ compile() {
 	echo "compilation fail"
 	exit -1
     fi
-    gcc tmp/out.s driver.c -o tmp/a.out
+    "$CC" tmp/out.s driver.c -o tmp/a.out
     if [ $? != 0 ]; then
-	echo "gcc fail"
+	echo "$CC fail"
 	exit -1
     fi
 }
