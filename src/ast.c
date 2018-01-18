@@ -6,14 +6,29 @@
 #include "ast.h"
 #include "utils.h"
 
+Ast* to_ast(Type t, void*);
 Ast* parse_expr(FILE* fp, Env* env, int prio);
+Ast* parse_funcall(FILE* fp, Env* env, char const* name);
+int const MAX_ARGC = 6;
+char const* const REGS[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
-#define DEFINE_NEW(T) \
-  T* new_ ## T() {\
-    return malloc(sizeof(T));\
+void skip(FILE* fp) {
+  int c;
+  while(c = getc(fp), c != EOF) {
+    if(!isspace(c)) {
+      break;
+    }
   }
+  ungetc(c, fp);
+}
 
-DEFINE_NEW(Ast);
+Ast* new_Ast() {
+  return malloc(sizeof(Ast));
+}
+
+Ast** new_Ast_array(size_t size) {
+  return malloc(sizeof(Ast) * (size + 1));
+}
 
 Env* new_Env() {
   Env* e = malloc(sizeof(Env));
@@ -28,6 +43,14 @@ Var* new_Var() {
   v->offset = 0;
   init_Var_hook(v);
   return v;
+}
+
+FunCall* new_FunCall() {
+  FunCall* f = malloc(sizeof(FunCall));
+  f->name = NULL;
+  f->argc = 0;
+  f->args = NULL;
+  return f;
 }
 
 Var* copy_var(Var const* _v) {
@@ -72,11 +95,18 @@ Ast* make_ast_int(int n) {
   return ast;
 }
 
-Ast* make_ast_symbol(char const* buf) {
+Ast* make_ast_symbol(Env* env, char const* name) {
+  FOREACH(Var, env->vars, v) {
+    if(!strcmp(v->name, name)) {
+      return to_ast(AST_SYM, copy_var(v));
+    }
+  }
   Ast* const ast = new_Ast();
   ast->type = AST_SYM;
   ast->var = new_Var();
-  ast->var->name = buf;
+  ast->var->name = name;
+  list_of_Var_append(env->vars, ast->var);
+  ast->var->offset = list_of_Var_length(env->vars) * 4;
   return ast;
 }
 
@@ -122,6 +152,22 @@ Ast* make_ast_statements(INTRUSIVE_LIST_OF(Statement) ss) {
   return ast;
 }
 
+Ast* make_ast_funcall(char const* name, int argc, Ast** args) {
+  assert(args != NULL);
+  Ast* const ast = new_Ast();
+  Ast** const _args = new_Ast_array(argc);
+  for(int i = 0; i < argc; ++i) {
+    assert(args[i] != NULL);
+    _args[i] = args[i];
+  }
+  ast->type = AST_FUNCALL;
+  ast->funcall = new_FunCall();
+  ast->funcall->name = name;
+  ast->funcall->argc = argc;
+  ast->funcall->args = _args;
+  return ast;
+}
+
 Ast* parse_int(FILE* fp, int sign) {
   int sum = 0;
   int c;
@@ -132,29 +178,31 @@ Ast* parse_int(FILE* fp, int sign) {
   return make_ast_int(sum * sign);
 }
 
-Ast* parse_symbol(FILE* fp, Env* env) {
-  char* const buf = malloc(MAX_BUF_LEN);
+char const* read_symbol(FILE* fp) {
+  char* const buf = malloc(MAX_BUF_LEN); // todo: expand buf when needed
   int c;
   int at = 0;
   while(c = getc(fp), isalnum(c)) {
     if (at >= MAX_BUF_LEN - 1) {
-      warn("symbol too long! truncated!\n");
-      break;
+      warn("symbol too long! giving up!\n");
+      return NULL;
     }
     buf[at++] = c;
   }
   ungetc(c, fp);
   buf[at] = '\0';
-  FOREACH(Var, env->vars, v) {
-    if(!strcmp(v->name, buf)) {
-      return to_ast(AST_SYM, copy_var(v));
-    }
-  }
+  return buf;
+}
 
-  Ast* const ast = make_ast_symbol(buf);
-  list_of_Var_append(env->vars, ast->var);
-  ast->var->offset = list_of_Var_length(env->vars) * 4;
-  return ast;
+Ast* parse_symbol_or_funcall(FILE* fp, Env* env) {
+  char const* name = read_symbol(fp);
+  skip(fp);
+  int const c = peek(fp);
+  if(c == '(') {
+    getc(fp);
+    return parse_funcall(fp, env, name);
+  }
+  return make_ast_symbol(env, name);
 }
 
 Ast* parse_prim(FILE* fp, Env* env) {
@@ -163,7 +211,7 @@ Ast* parse_prim(FILE* fp, Env* env) {
     int const sign = 1;
     return parse_int(fp, sign);
   } else if(isalpha(c)) {
-    return parse_symbol(fp, env);
+    return parse_symbol_or_funcall(fp, env);
   } else if(c == '(') {
     getc(fp);
     int const prio = 0;
@@ -196,14 +244,30 @@ Ast* parse_prim(FILE* fp, Env* env) {
   }
 }
 
-void skip(FILE* fp) {
-  int c;
-  while(c = getc(fp), c != EOF) {
-    if(!isspace(c)) {
+Ast* parse_funcall(FILE* fp, Env* env, char const* name) {
+  Ast* args[MAX_ARGC];
+  int argc = 0;
+  for(; argc < MAX_ARGC; ++argc) {
+    skip(fp);
+    int const c = peek(fp);
+    if(c == ')') {
       break;
     }
+    if(c == EOF) { warn("unexpected EOF\n"); return NULL; }
+    int const prio = 0;
+    args[argc] = parse_expr(fp, env, prio);
+    skip(fp);
+    int const c2 = getc(fp);
+    if(c2 == EOF) { warn("unexpected EOF\n"); return NULL; }
+    if(c2 == ')') { break; }
+    if(c2 == ',') { /* nop */ }
+    else { warn("unexpected char(%c)\n", c2); return NULL; }
   }
-  ungetc(c, fp);
+  if(argc == MAX_ARGC) {
+    warn("too many arg(max argc is %d)\n", MAX_ARGC);
+    return NULL;
+  }
+  return make_ast_funcall(name, argc + 1, args);
 }
 
 int priority(char op) {
@@ -269,6 +333,7 @@ Ast* parse_expr(FILE* fp, Env* env, int prio) {
     }
     case ';':
     case ')':
+    case ',':
     {
       ungetc(c, fp);
       return ast;
@@ -363,6 +428,19 @@ void print_ast(Ast const* ast) {
       print_ast(make_ast_statement(s));
     }
     break;
+  case AST_FUNCALL:
+  {
+    printf("(%s ", ast->funcall->name);
+    int const argc = ast->funcall->argc;
+    for(int i = 0; i < argc; ++i) {
+      print_ast(ast->funcall->args[i]);
+      if(i != argc - 1) {
+        printf(" ");
+      }
+    }
+    printf(")");
+    break;
+  }
   default:
     warn("never come!!!(type: %d)\n", t);
   }

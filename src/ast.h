@@ -12,6 +12,7 @@ typedef enum {
   AST_SYM,
   AST_STATEMENT,
   AST_STATEMENTS,
+  AST_FUNCALL,
 
   AST_EMPTY,
   AST_UNKNOWN = 999,
@@ -56,6 +57,12 @@ struct Statements {
   INTRUSIVE_LIST_OF(Statement) val;
 };
 
+typedef struct FunCall {
+  char const* name;
+  int argc;
+  Ast** args;
+} FunCall;
+
 struct Ast {
   Type type;
   union {
@@ -64,6 +71,7 @@ struct Ast {
     Var* var;
     Statement* statement;
     Statements* statements;
+    FunCall* funcall;
   };
 };
 
