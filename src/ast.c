@@ -9,6 +9,7 @@
 Ast* to_ast(Type t, void*);
 Ast* parse_expr(FILE* fp, Env* env, int prio);
 Ast* parse_funcall(FILE* fp, Env* env, char const* name);
+char const* show_Type(Type);
 int const MAX_ARGC = 6;
 char const* const REGS[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
@@ -441,8 +442,40 @@ void print_ast(Ast const* ast) {
     printf(")");
     break;
   }
+  case AST_EMPTY:
+    break;
   default:
     warn("never come!!!(type: %d)\n", t);
+  }
+}
+
+char const* show_Type(Type t) {
+  switch(t) {
+  case AST_INT:
+    return "AST_INT";
+  case AST_OP_PLUS:
+    return "AST_OP_PLUS";
+  case AST_OP_MINUS:
+    return "AST_OP_MINUS";
+  case AST_OP_MULTI:
+    return "AST_OP_MULTI";
+  case AST_OP_ASSIGN:
+    return "AST_OP_ASSIGN";
+  case AST_SYM:
+    return "AST_SYM";
+  case AST_STATEMENT:
+    return "AST_STATEMENT";
+  case AST_STATEMENTS:
+    return "AST_STATEMENTS";
+  case AST_FUNCALL:
+    return "AST_FUNCALL";
+  case AST_EMPTY:
+    return "AST_EMPTY";
+  case AST_UNKNOWN:
+    return "AST_UNKNOWN";
+  default:
+    warn("?(type: %d)", t);
+    return "?";
   }
 }
 
