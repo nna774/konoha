@@ -184,7 +184,7 @@ char const* read_symbol(FILE* fp) {
   char* const buf = malloc(MAX_BUF_LEN); // todo: expand buf when needed
   int c;
   int at = 0;
-  while(c = getc(fp), isalnum(c)) {
+  while(c = getc(fp), isalnum(c) || c == '_') {
     if (at >= MAX_BUF_LEN - 1) {
       warn("symbol too long! giving up!\n");
       return NULL;

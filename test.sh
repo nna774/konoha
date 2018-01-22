@@ -99,6 +99,15 @@ test_ast "(f 1 2 3 4)" "f(1, 2, 3, 4);"
 test_ast "(f 1 2 3 4 5)" "f(1, 2, 3,4,5);"
 test_ast "(f 1 2 3 4 5 6)" "f(1, 2, 3, 4, 5, 6);"
 
+test_ast "(underscore_)" "underscore_();"
+test_ast "(underscore_2)" "underscore_2();"
+test_ast "(underscore_a)" "underscore_a();"
+
+test_ast "a" "a;"
+test_ast "underscore_" "underscore_;"
+test_ast "underscore_2" "underscore_2;"
+test_ast "underscore_a" "underscore_a;"
+
 test_ast "(let a 42)a" ";;;;;a=42;;;;a;"
 
 test "0" "0;"
