@@ -76,6 +76,12 @@ Statements* new_Statements() {
   return s;
 }
 
+Block* new_Block() {
+  Block* const b = malloc(sizeof(Block));
+  b->val = NULL;
+  return b;
+}
+
 int const MAX_BUF_LEN = 256;
 
 char const * op_from_type(Type t) {
@@ -153,6 +159,15 @@ Ast* make_ast_statements(INTRUSIVE_LIST_OF(Statement) ss) {
   ast->type = AST_STATEMENTS;
   ast->statements = new_Statements();
   ast->statements->val = ss;
+  return ast;
+}
+
+Ast* make_ast_block(Ast* ss) {
+  assert(ss->type == AST_STATEMENTS);
+  Ast* const ast = new_Ast();
+  ast->type = AST_BLOCK;
+  ast->block = new_Block();
+  ast->block->val = ss;
   return ast;
 }
 
@@ -338,6 +353,7 @@ Ast* parse_expr(FILE* fp, Env* env, int prio) {
     case ';':
     case ')':
     case ',':
+    case '}':
     {
       ungetc(c, fp);
       return ast;
@@ -380,10 +396,15 @@ Statement* parse_statement(FILE* fp, Env* env) {
   return make_statement(ast);
 }
 
-Ast* parse(FILE* fp, Env* env) {
+Ast* parse_statements(FILE* fp, Env* env) {
   INTRUSIVE_LIST_OF(Statement) ss = new_list_of_Statement();
   int c;
   while(c = peek(fp), c != EOF) {
+    if(c == '}') {
+      // end of block
+      ungetc('}', fp);
+      break;
+    }
     skip(fp);
     Statement* s = parse_statement(fp, env);
     skip(fp);
@@ -391,6 +412,23 @@ Ast* parse(FILE* fp, Env* env) {
     list_of_Statement_append(ss, s);
   }
   return make_ast_statements(ss);
+}
+
+Ast* parse_block(FILE* fp, Env* env) {
+  skip(fp);
+  int c = getc(fp);
+  if(c != '{') { warn("unexpected char(%c)\n", c); return NULL; }
+  Ast* const ss = parse_statements(fp, env);
+  c = getc(fp);
+  if(c != '}') { warn("unexpected char(%c)\n", c); return NULL; }
+  assert(ss->type == AST_STATEMENTS);
+  assert(ss->statements != NULL);
+  return make_ast_block(ss);
+}
+
+Ast* parse(FILE* fp, Env* env) {
+  Ast* const ast = parse_block(fp, env);
+  return ast;
 }
 
 Ast* make_ast(Env* env) {
@@ -452,6 +490,13 @@ void print_ast(Ast const* ast) {
     printf(")");
     break;
   }
+  case AST_BLOCK:
+  {
+    printf("(do ");
+    print_ast(ast->block->val);
+    printf(")");
+    break;
+  }
   case AST_EMPTY:
     break;
   default:
@@ -481,6 +526,8 @@ char const* show_Type(Type t) {
     return "AST_FUNCALL";
   case AST_EMPTY:
     return "AST_EMPTY";
+  case AST_BLOCK:
+    return "AST_BLOCK";
   case AST_UNKNOWN:
     return "AST_UNKNOWN";
   default:

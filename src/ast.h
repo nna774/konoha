@@ -13,6 +13,7 @@ typedef enum {
   AST_STATEMENT,
   AST_STATEMENTS,
   AST_FUNCALL,
+  AST_BLOCK,
 
   AST_EMPTY,
   AST_UNKNOWN = 999,
@@ -28,6 +29,8 @@ struct Statement;
 typedef struct Statement Statement;
 struct Statements;
 typedef struct Statements Statements;
+struct Block;
+typedef struct Block Block;
 
 DEFINE_INTRUSIVE_LIST(Var);
 DEFINE_INTRUSIVE_LIST(Statement);
@@ -57,6 +60,10 @@ struct Statements {
   INTRUSIVE_LIST_OF(Statement) val;
 };
 
+struct Block {
+  Ast* val;
+};
+
 typedef struct FunCall {
   char const* name;
   int argc;
@@ -72,6 +79,7 @@ struct Ast {
     Statement* statement;
     Statements* statements;
     FunCall* funcall;
+    Block* block;
   };
 };
 

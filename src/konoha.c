@@ -81,6 +81,9 @@ void emit_ast(Ast const* ast, Env const* env, int depth) {
     restore_regs(depth);
     break;
   }
+  case AST_BLOCK:
+    emit_ast(ast->block->val, env, depth);
+    break;
   default:
     warn("never come!!!(type: %s)\n", show_Type(t));
     break;
