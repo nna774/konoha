@@ -1,9 +1,6 @@
 #include <stdarg.h>
 #include "utils.h"
 
-int const true = 1;
-int const false = 0;
-
 int peek(FILE* fp) {
   int const c = getc(fp);
   if(c == EOF) {

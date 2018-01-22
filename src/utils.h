@@ -2,10 +2,7 @@
 #define NNA774_KONOHA_UTILS_H
 
 #include <stdio.h>
-
-typedef int bool;
-int const true;
-int const false;
+#include <stdbool.h>
 
 int peek(FILE* fp);
 void warn(char const* fmt, ...);
