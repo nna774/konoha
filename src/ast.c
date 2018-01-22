@@ -48,6 +48,8 @@ Var* new_Var(Type* t, char const* name) {
   Var* const v = malloc(sizeof(Var));
   v->name = name;
   v->type = t;
+  v->initialized = false;
+  v->defined = false;
   v->offset = 0;
   init_Var_hook(v);
   return v;
@@ -195,19 +197,32 @@ Ast* make_ast_funcall(char const* name, int argc, Ast** args) {
   return ast;
 }
 
+Var* find_var_by_name(Env* env, char const* name) {
+  FOREACH(Var, env->vars, v) {
+    if(!strcmp(v->name, name)) {
+      return v;
+    }
+  }
+  return NULL;
+}
+
 Var* add_sym_to_env(Env* env, Type* type, char const* sym_name) {
   Type* const t = list_of_Type_find(env->types, type);
   assert(t != NULL);
+  if(!find_var_by_name(env, sym_name)) {
+    warn("identifier %s is already declared\n", sym_name);
+  }
+
   Var* const v = new_Var(t, sym_name);
   list_of_Var_append(env->vars, v);
   v->offset = list_of_Var_length(env->vars) * 4;
   return v;
 }
 
-Ast* make_ast_val_decl(Env* env, Type* t, char const* sym_name) {
+Ast* make_ast_val_define(Env* env, Type* t, char const* sym_name) {
   Var* v = add_sym_to_env(env, t, sym_name);
   Ast* ast = new_Ast();
-  ast->type = AST_SYM_DECLER;
+  ast->type = AST_SYM_DEFINE;
   ast->var = v;
   return ast;
 }
@@ -257,11 +272,11 @@ Ast* parse_symbol_or_funcall(FILE* fp, Env* env) {
     skip(fp);
     int const c = peek(fp);
     if(c == ';') {
-      // sym decl
-      return make_ast_val_decl(env, t, sym_name);
+      // sym define
+      return make_ast_val_define(env, t, sym_name);
     }
     if(c == '=') {
-      // sym defini
+      // sym define with inti val
       return NULL;
     }
     warn("unexpected char(%c)\n", c);
@@ -517,11 +532,14 @@ void print_ast(Ast const* ast) {
     printf("(eval %s)", ast->var->name);
     break;
   case AST_SYM_DECLER:
-    printf("(defvar %s)", ast->var->name);
+    warn("unimpled");
     break;
   case AST_SYM_DEFINE:
-    warn("unimpled");
-    printf("(defvar %s", ast->var->name);
+    if(ast->var->initialized) {
+      warn("unimpled");
+    } else {
+      printf("(defvar %s)", ast->var->name);
+    }
     break;
   case AST_OP_ASSIGN:
     assert(ast->bi_op.lhs->type == AST_SYM);

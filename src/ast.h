@@ -55,6 +55,8 @@ struct Type {
 struct Var {
   char const* name;
   Type* type;
+  bool initialized;
+  bool defined;
   int offset;
   INTRUSIVE_LIST_HOOK(Var);
 };
