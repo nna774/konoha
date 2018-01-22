@@ -90,9 +90,11 @@ Statements* new_Statements() {
   return s;
 }
 
-Block* new_Block() {
+Block* new_Block(Env* parent) {
   Block* const b = malloc(sizeof(Block));
   b->val = NULL;
+  assert(parent != NULL);
+  b->env = expand_Env(parent);
   return b;
 }
 
@@ -166,9 +168,8 @@ Ast* to_ast(AstType t, void* v) {
     ast->statements->val = v;
     break;
   case AST_BLOCK:
-    ast->block = new_Block();
-    ast->block->val = v;
-    break;
+    warn("block can't make from to_ast\n");
+    return NULL;
   case AST_SYM_DEFINE:
     ast->var = v;
     break;
@@ -186,9 +187,13 @@ Ast* make_ast_statements(INTRUSIVE_LIST_OF(Statement) ss) {
   return to_ast(AST_STATEMENTS, ss);
 }
 
-Ast* make_ast_block(Ast* b) {
+Ast* make_ast_block(Env* env, Ast* b) {
   assert(b->type == AST_STATEMENTS);
-  return to_ast(AST_BLOCK, b);
+  Ast* const ast = new_Ast();
+  ast->type = AST_BLOCK;
+  ast->block = new_Block(env);
+  ast->block->val = b;
+  return ast;
 }
 
 Ast* make_ast_funcall(char const* name, int argc, Ast** args) {
@@ -503,7 +508,7 @@ Ast* parse_block(FILE* fp, Env* env) {
   if(c != '}') { warn("unexpected char(%c)\n", c); return NULL; }
   assert(ss->type == AST_STATEMENTS);
   assert(ss->statements != NULL);
-  return make_ast_block(ss);
+  return make_ast_block(env, ss);
 }
 
 Ast* parse(FILE* fp, Env* env) {

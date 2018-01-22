@@ -78,6 +78,7 @@ struct Statements {
 
 struct Block {
   Ast* val;
+  Env* env;
 };
 
 struct FunCall {
