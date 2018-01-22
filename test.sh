@@ -174,3 +174,6 @@ test "4" "print_int(add4(1, 1, 1, 1));"
 test "5" "print_int(add5(1, 1, 1, 1, 1));"
 test "6" "print_int(add6(1, 1, 1, 1, 1, 1));"
 test "10" "print_int(add(add(1, 2), add(3, 4)));"
+
+test "24" "print_int(mul(mul(1, 2), mul(3, 4)));"
+test "1024" "print_int(add(add(1, 2), add(3, 4)));print_int(mul(mul(1, 2), mul(3, 4)));"

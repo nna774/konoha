@@ -6,6 +6,19 @@
 
 char const* const REGS[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 
+void save_regs(int depth) {
+  for(int i = 0; i < 6; ++i) {
+    int const offset = (depth + i) * 4;
+    printf("\tmov %%%s, -%d(%%rbp)\n", REGS[i], offset);
+  }
+}
+void restore_regs(int depth) {
+  for(int i = 0; i < 6; ++i) {
+    int const offset = (depth + i) * 4;
+    printf("\tmov -%d(%%rbp), %%%s\n", offset, REGS[i]);
+  }
+}
+
 void emit_int(Ast const* ast) {
   printf("\tmov $%d, %%eax\n", ast->int_val);
 }
@@ -53,6 +66,7 @@ void emit_ast(Ast const* ast, Env const* env, int depth) {
     break;
   case AST_FUNCALL:
   {
+    save_regs(depth);
     int const argc = ast->funcall->argc;
     char const* const name = ast->funcall->name;
     if(argc > 6) {
@@ -60,10 +74,11 @@ void emit_ast(Ast const* ast, Env const* env, int depth) {
       break;
     }
     for(int i = 0; i < argc; ++i) {
-      emit_ast(ast->funcall->args[i], env, depth);
+      emit_ast(ast->funcall->args[i], env, depth+6);
       printf("\tmov %%eax, %%%s\n", REGS[i]);
     }
     printf("\tcall %s\n", name);
+    restore_regs(depth);
     break;
   }
   default:

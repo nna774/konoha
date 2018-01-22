@@ -24,6 +24,10 @@ int add6(int n, int m, int o, int p, int q, int r) {
   return n + m + o + p + q + r;
 }
 
+int mul(int n, int m) {
+  return n * m;
+}
+
 void print_int(int n) {
-  printf("%d\n", n);
+  printf("%d", n);
 }
