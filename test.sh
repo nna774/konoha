@@ -110,6 +110,8 @@ test_ast "(do underscore_a)" "{underscore_a;}"
 
 test_ast "(do (let a 42)a)" "{;;;;;a=42;;;;a;}"
 
+test_ast "(do (do a)(do a))" "{{a;}{a;}}"
+
 test "0" "{print_int(0);}"
 test "42" "{print_int(42);}"
 test "100" "{print_int(100);}"

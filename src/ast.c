@@ -9,6 +9,7 @@
 Ast* to_ast(Type t, void*);
 Ast* parse_expr(FILE* fp, Env* env, int prio);
 Ast* parse_funcall(FILE* fp, Env* env, char const* name);
+Ast* parse_block(FILE* fp, Env* env);
 char const* show_Type(Type);
 int const MAX_ARGC = 6;
 
@@ -372,13 +373,14 @@ Ast* parse_expr(FILE* fp, Env* env, int prio) {
 
 Statement* parse_statement(FILE* fp, Env* env) {
   {
-    int const c = getc(fp);
+    int const c = peek(fp);
     if(c == ';') { // empty statement
+      getc(fp);
       Ast* const ast = new_Ast();
       ast->type = AST_EMPTY;
       return make_statement(ast);
-    } else {
-      ungetc(c, fp);
+    } else if(c == '{') {
+      return make_statement(parse_block(fp, env));
     }
   }
   int const prio = 0;
@@ -402,7 +404,6 @@ Ast* parse_statements(FILE* fp, Env* env) {
   while(c = peek(fp), c != EOF) {
     if(c == '}') {
       // end of block
-      ungetc('}', fp);
       break;
     }
     skip(fp);
