@@ -46,7 +46,10 @@ test_ast() {
 	echo "Test failed: expected $expected, but got $res"
 	exit -1
     fi
+    : ok
 }
+
+test_ast "(do )" "{}"
 
 test_ast "(do 0)" "{0;}"
 test_ast "(do 42)" "{42;}"
