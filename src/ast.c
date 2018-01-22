@@ -11,7 +11,6 @@ Ast* parse_expr(FILE* fp, Env* env, int prio);
 Ast* parse_funcall(FILE* fp, Env* env, char const* name);
 char const* show_Type(Type);
 int const MAX_ARGC = 6;
-char const* const REGS[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
 void skip(FILE* fp) {
   int c;

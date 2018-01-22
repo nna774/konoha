@@ -4,6 +4,8 @@
 #include "ast.h"
 #include "utils.h"
 
+char const* const REGS[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
+
 void emit_int(Ast const* ast) {
   printf("\tmov $%d, %%eax\n", ast->int_val);
 }
@@ -49,6 +51,21 @@ void emit_ast(Ast const* ast, Env const* env, int depth) {
       emit_ast(make_ast_statement(s), env, depth);
     }
     break;
+  case AST_FUNCALL:
+  {
+    int const argc = ast->funcall->argc;
+    char const* const name = ast->funcall->name;
+    if(argc > 6) {
+      warn("argc over 6 is not impled now");
+      break;
+    }
+    for(int i = 0; i < argc; ++i) {
+      emit_ast(ast->funcall->args[i], env, depth);
+      printf("\tmov %%eax, %%%s\n", REGS[i]);
+    }
+    printf("\tcall %s\n", name);
+    break;
+  }
   default:
     warn("never come!!!(type: %s)\n", show_Type(t));
     break;
