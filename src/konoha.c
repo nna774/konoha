@@ -56,12 +56,14 @@ void emit_ast(Ast const* ast, Env const* env, int depth) {
   case AST_SYM:
     printf("\tmov -%d(%%rbp), %%eax\n", ast->var->offset);
     break;
+  case AST_SYM_DEFINE:
+    break;
   case AST_STATEMENT:
     emit_ast(ast->statement->val, env, depth);
     break;
   case AST_STATEMENTS:
     FOREACH(Statement, ast->statements->val, s) {
-      emit_ast(make_ast_statement(s), env, depth);
+      emit_ast(make_ast_statement(s), env, depth + 1);
     }
     break;
   case AST_FUNCALL:
@@ -72,13 +74,13 @@ void emit_ast(Ast const* ast, Env const* env, int depth) {
       warn("argc over 6 is not impled now");
       break;
     }
-    save_regs(argc, depth);
+    save_regs(argc, depth + 1);
     for(int i = 0; i < argc; ++i) {
-      emit_ast(ast->funcall->args[i], env, depth+6);
+      emit_ast(ast->funcall->args[i], env, depth+7);
       printf("\tmov %%eax, %%%s\n", REGS[i]);
     }
     printf("\tcall %s\n", name);
-    restore_regs(argc, depth);
+    restore_regs(argc, depth + 1);
     break;
   }
   case AST_BLOCK:
