@@ -286,10 +286,9 @@ Ast* parse_symbol_or_funcall(FILE* fp, Env* env) {
     return parse_funcall(fp, env, name);
   }
 
-  FOREACH(Var, env->vars, v) {
-    if(!strcmp(v->name, name)) {
-      return make_ast_symbol_ref(env, v);
-    }
+  Var* const v = find_var_by_name(env, name);
+  if(v != NULL) {
+    return make_ast_symbol_ref(env, v);
   }
   warn("identifier %s is not declared\n", name);
   return NULL;
