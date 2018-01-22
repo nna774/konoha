@@ -455,7 +455,7 @@ void print_ast(Ast const* ast) {
   case AST_EMPTY:
     break;
   default:
-    warn("never come!!!(type: %d)\n", t);
+    warn("never come!!!(type: %s)\n", show_Type(t));
   }
 }
 
