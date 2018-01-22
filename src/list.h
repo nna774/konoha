@@ -23,7 +23,7 @@
   void list_of_ ## Type ## _append(INTRUSIVE_LIST_OF(Type), Type*);\
   int list_of_ ## Type ## _length(INTRUSIVE_LIST_OF(Type));\
   Type* list_of_ ## Type ## _find(INTRUSIVE_LIST_OF(Type), Type*); \
-  Type* list_of_ ## Type ## _find_cond(INTRUSIVE_LIST_OF(Type), Type*, bool (*f)(Type*, Type*)); \
+  Type* list_of_ ## Type ## _find_cond(INTRUSIVE_LIST_OF(Type), Type*, bool (*f)(Type const*, Type const*)); \
 
 #define USE_INTRUSIVE_LIST(Type) \
   struct _list_of_ ## Type* new_list_of_ ## Type() {\
@@ -67,7 +67,7 @@
     return NULL;\
   }\
 \
-  Type* list_of_ ## Type ## _find_cond(INTRUSIVE_LIST_OF(Type) l, Type* t, bool (*f)(Type*, Type*)) {\
+  Type* list_of_ ## Type ## _find_cond(INTRUSIVE_LIST_OF(Type) l, Type* t, bool (*f)(Type const*, Type const*)) {\
     FOREACH(Type, l, e) {\
       if(f(e, t)) return e;\
     }\
