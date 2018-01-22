@@ -35,12 +35,20 @@ Ast** new_Ast_array(size_t size) {
   return arr;
 }
 
-Env* new_Env() {
+Env* new_Env_impl(Env* env) {
   Env* const e = malloc(sizeof(Env));
-  e->parent = NULL;
+  e->parent = env;
   e->types = new_list_of_Type();
   e->vars = new_list_of_Var();
   return e;
+}
+
+Env* new_Env() {
+  return new_Env_impl(NULL);
+}
+
+Env* expand_Env(Env* parent) {
+  return new_Env_impl(parent);
 }
 
 Var* new_Var(Type* t, char const* name) {
