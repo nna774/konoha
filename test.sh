@@ -79,12 +79,15 @@ test_ast "(do (add 1 (imul 2 3)))" "{1+2*3;}"
 test_ast "(do (add (imul 3 4) 5))" "{3*4+5;}"
 test_ast "(do (add (add 1 (imul 2 3)) 4))" "{1+2*3+4;}"
 
-test_ast "(do (let a 0))" "{a=0;}"
-test_ast "(do (let a (add 1 2)))" "{a=1+2;}"
-test_ast "(do (let a 0)(let b 0))" "{a=0;b=0;}"
+test_ast "(do (defvar a))" "{ int a; }"
+test_ast "(do (defvar a)(eval a))" "{int a; a;}"
+test_ast "(do (defvar a)(let a 0))" "{int a;a=0;}"
+test_ast "(do (defvar a)(let a (add 1 2)))" "{int a; a=1+2;}"
+test_ast "(do (defvar a)(defvar b)(let a 0)(let b 0))" "{int a; int b; a=0; b=0;}"
+test_ast "(do (defvar a)(let a 0)(defvar b)(let b 0))" "{int a; a=0; int b; b=0;}"
 
-test_ast "(do (let a 1)(let b 2)(add (add (imul a b) (imul a 3)) (imul b 2)))" "{a=1;b=2;a*b+a*3+b*2;}"
-test_ast "(do (let a 1)(let a (add a 2))a)" "{a = 1; a = a + 2; a;}"
+test_ast "(do (defvar a)(defvar b)(let a 1)(let b 2)(add (add (imul (eval a) (eval b)) (imul (eval a) 3)) (imul (eval b) 2)))" "{int a; int b;a=1;b=2;a*b+a*3+b*2;}"
+test_ast "(do (defvar a)(let a 1)(let a (add (eval a) 2))(eval a))" "{int a;a = 1; a = a + 2; a;}"
 
 test_ast "(do 1)" "{(1);}"
 test_ast "(do (imul (add 1 2) 3))" "{(1+2)*3;}"
@@ -103,14 +106,13 @@ test_ast "(do (underscore_))" "{underscore_();}"
 test_ast "(do (underscore_2))" "{underscore_2();}"
 test_ast "(do (underscore_a))" "{underscore_a();}"
 
-test_ast "(do a)" "{a;}"
-test_ast "(do underscore_)" "{underscore_;}"
-test_ast "(do underscore_2)" "{underscore_2;}"
-test_ast "(do underscore_a)" "{underscore_a;}"
+test_ast "(do (defvar underscore_))" "{int underscore_;}"
+test_ast "(do (defvar underscore_2))" "{int underscore_2;}"
+test_ast "(do (defvar underscore_a))" "{int underscore_a;}"
 
-test_ast "(do (let a 42)a)" "{;;;;;a=42;;;;a;}"
+test_ast "(do (defvar a)(let a 42)(eval a))" "{int a;;;;;a=42;;;;a;}"
 
-test_ast "(do (do a)(do a))" "{{a;}{a;}}"
+test_ast "(do (do (defvar a))(do (defvar a)))" "{{int a;}{int a;}}"
 
 test "0" "{print_int(0);}"
 test "42" "{print_int(42);}"
@@ -140,14 +142,16 @@ test "7" "{print_int(1+2*3);}"
 test "17" "{print_int(3*4+5);}"
 test "11" "{print_int(1+2*3+4);}"
 
-test "3" "{a=1;print_int(a+2);}"
-test "7" "{a=1;b=42;b*2;print_int(a+2*3);}"
+test "3" "{int a;a=1;print_int(a+2);}"
+test "7" "{int a;int b;a=1;b=42;b*2;print_int(a+2*3);}"
 test "9" "{print_int(1*2+1*3+2*2);}"
-test "9" "{a=1;b=2;print_int(a*b+a*3+b*2);}"
+test "9" "{int a; int b;a=1;b=2;print_int(a*b+a*3+b*2);}"
 
-test "2" "{a=1;a=2;print_int(a);}"
-test "3" "{a = 1; a = a + 2; print_int(a);}"
+test "2" "{int a;a=1;a=2;print_int(a);}"
+test "3" "{int a;a = 1; a = a + 2; print_int(a);}"
 test "30" "{
+int a;
+int b;
 a = 1;
 b = 2;
 a = a + 2;
@@ -165,8 +169,8 @@ test "14" "{print_int((1-(2-3))*((4-5)-6)*(0-1));}"
 test "4" "{print_int((+2)*((+3)-(+5))*(-1));}"
 test "4" "{print_int((-2)*((-3)-(-5))*(-1));}"
 
-test "2" "{a=2;print_int(+a);}"
-test "-2" "{a=2;print_int(-a);}"
+test "2" "{int a;a=2;print_int(+a);}"
+test "-2" "{int a;a=2;print_int(-a);}"
 
 test "42" "{print_int(return42());}"
 test "1" "{print_int(id(1));}"

@@ -38,13 +38,16 @@ Ast** new_Ast_array(size_t size) {
 Env* new_Env() {
   Env* const e = malloc(sizeof(Env));
   e->parent = NULL;
+  e->types = new_list_of_Type();
   e->vars = new_list_of_Var();
   return e;
 }
 
-Var* new_Var() {
+Var* new_Var(Type* t, char const* name) {
+  assert(t != NULL);
   Var* const v = malloc(sizeof(Var));
-  v->name = NULL;
+  v->name = name;
+  v->type = t;
   v->offset = 0;
   init_Var_hook(v);
   return v;
@@ -83,6 +86,14 @@ Block* new_Block() {
   return b;
 }
 
+Type* new_Type(char const* name) {
+  assert(name != NULL);
+  Type* const t = malloc(sizeof(Type));
+  t->name = name;
+  init_Type_hook(t);
+  return t;
+}
+
 int const MAX_BUF_LEN = 256;
 
 char const * op_from_type(AstType t) {
@@ -106,18 +117,16 @@ Ast* make_ast_int(int n) {
   return ast;
 }
 
-Ast* make_ast_symbol(Env* env, char const* name) {
-  FOREACH(Var, env->vars, v) {
-    if(!strcmp(v->name, name)) {
-      return to_ast(AST_SYM, copy_var(v));
-    }
-  }
+bool same_name_var(Var const* lhs, Var const* rhs) {
+  return !strcmp(lhs->name, rhs->name);
+}
+
+Ast* make_ast_symbol_ref(Env* env, Var* var) {
+  Var* const v = list_of_Var_find_cond(env->vars, var, same_name_var);
+  assert(v != NULL);
   Ast* const ast = new_Ast();
   ast->type = AST_SYM;
-  ast->var = new_Var();
-  ast->var->name = name;
-  list_of_Var_append(env->vars, ast->var);
-  ast->var->offset = list_of_Var_length(env->vars) * 4;
+  ast->var = v;
   return ast;
 }
 
@@ -186,6 +195,23 @@ Ast* make_ast_funcall(char const* name, int argc, Ast** args) {
   return ast;
 }
 
+Var* add_sym_to_env(Env* env, Type* type, char const* sym_name) {
+  Type* const t = list_of_Type_find(env->types, type);
+  assert(t != NULL);
+  Var* const v = new_Var(t, sym_name);
+  list_of_Var_append(env->vars, v);
+  v->offset = list_of_Var_length(env->vars) * 4;
+  return v;
+}
+
+Ast* make_ast_val_decl(Env* env, Type* t, char const* sym_name) {
+  Var* v = add_sym_to_env(env, t, sym_name);
+  Ast* ast = new_Ast();
+  ast->type = AST_SYM_DECLER;
+  ast->var = v;
+  return ast;
+}
+
 Ast* parse_int(FILE* fp, int sign) {
   int sum = 0;
   int c;
@@ -212,15 +238,49 @@ char const* read_symbol(FILE* fp) {
   return buf;
 }
 
+Type* isType(Env const* env, char const* name) {
+  assert(env->types != NULL);
+  FOREACH(Type, env->types, t) {
+    if(!strcmp(t->name, name)) {
+      return t;
+    }
+  }
+  return NULL;
+}
+
 Ast* parse_symbol_or_funcall(FILE* fp, Env* env) {
   char const* name = read_symbol(fp);
+  Type* t;
+  if(t = isType(env, name), t != NULL) {
+    skip(fp);
+    char const* sym_name = read_symbol(fp);
+    skip(fp);
+    int const c = peek(fp);
+    if(c == ';') {
+      // sym decl
+      return make_ast_val_decl(env, t, sym_name);
+    }
+    if(c == '=') {
+      // sym defini
+      return NULL;
+    }
+    warn("unexpected char(%c)\n", c);
+    return NULL;
+  }
   skip(fp);
   int const c = peek(fp);
   if(c == '(') {
     getc(fp);
     return parse_funcall(fp, env, name);
   }
-  return make_ast_symbol(env, name);
+
+  FOREACH(Var, env->vars, v) {
+    if(!strcmp(v->name, name)) {
+      return make_ast_symbol_ref(env, v);
+    }
+  }
+  warn("identifier %s is not declared\n", name);
+  return NULL;
 }
 
 Ast* parse_prim(FILE* fp, Env* env) {
@@ -454,12 +514,18 @@ void print_ast(Ast const* ast) {
     printf(")");
     break;
   case AST_SYM:
-    printf("%s", ast->var->name);
+    printf("(eval %s)", ast->var->name);
+    break;
+  case AST_SYM_DECLER:
+    printf("(defvar %s)", ast->var->name);
+    break;
+  case AST_SYM_DEFINE:
+    warn("unimpled");
+    printf("(defvar %s", ast->var->name);
     break;
   case AST_OP_ASSIGN:
-    printf("(let ");
-    print_ast(ast->bi_op.lhs);
-    printf(" ");
+    assert(ast->bi_op.lhs->type == AST_SYM);
+    printf("(let %s ", ast->bi_op.lhs->var->name);
     print_ast(ast->bi_op.rhs);
     printf(")");
     break;
@@ -519,6 +585,10 @@ char const* show_AstType(AstType t) {
     return "AST_OP_ASSIGN";
   case AST_SYM:
     return "AST_SYM";
+  case AST_SYM_DECLER:
+    return "AST_SYM_DECLER";
+  case AST_SYM_DEFINE:
+    return "AST_SYM_DEFINE";
   case AST_STATEMENT:
     return "AST_STATEMENT";
   case AST_STATEMENTS:
@@ -544,6 +614,6 @@ void print_env(Env const* env) {
     print_env(env->parent);
   }
   FOREACH(Var, env->vars, v) {
-    printf("%s\n", v->name);
+    printf("%s %s\n", v->type->name, v->name);
   }
 }

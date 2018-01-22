@@ -10,6 +10,8 @@ typedef enum {
   AST_OP_MULTI,
   AST_OP_ASSIGN,
   AST_SYM,
+  AST_SYM_DECLER,
+  AST_SYM_DEFINE,
   AST_STATEMENT,
   AST_STATEMENTS,
   AST_FUNCALL,
@@ -33,7 +35,10 @@ struct Block;
 typedef struct Block Block;
 struct FunCall;
 typedef struct FunCall FunCall;
+struct Type;
+typedef struct Type Type;
 
+DEFINE_INTRUSIVE_LIST(Type);
 DEFINE_INTRUSIVE_LIST(Var);
 DEFINE_INTRUSIVE_LIST(Statement);
 
@@ -42,8 +47,14 @@ typedef struct Bi_op {
   Ast const* rhs;
 } Bi_op;
 
+struct Type {
+  char const* name;
+  INTRUSIVE_LIST_HOOK(Type);
+};
+
 struct Var {
   char const* name;
+  Type* type;
   int offset;
   INTRUSIVE_LIST_HOOK(Var);
 };
@@ -51,6 +62,7 @@ struct Var {
 struct Env {
   Env const* parent;
   INTRUSIVE_LIST_OF(Var) vars;
+  INTRUSIVE_LIST_OF(Type) types;
 };
 
 struct Statement {
@@ -86,6 +98,7 @@ struct Ast {
 };
 
 Env* new_Env();
+Type* new_Type(char const* name);
 Ast* make_ast(Env*);
 Ast* make_ast_statement(Statement*);
 void print_ast(Ast const*);

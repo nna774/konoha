@@ -106,7 +106,9 @@ void emit(Ast const* ast, Env const* env) {
 }
 
 int main(int argc, char** argv) {
-  Env* env = new_Env();
+  Env* const env = new_Env();
+  Type* int_ = new_Type("int");
+  list_of_Type_append(env->types, int_);
   Ast* const ast = make_ast(env);
   if (argc > 1 && !strcmp(argv[1], "-a")) {
     print_ast(ast);
