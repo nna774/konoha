@@ -76,12 +76,13 @@ void emit(Ast const* ast, Env const* env) {
   assert(ast != NULL);
   printf(
     "\t.text\n"
-    "\t.global mymain\n"
-    "mymain:\n"
+    "\t.global main\n"
+    "main:\n"
     "\tpushq %%rbp\n"
     "\tmovq %%rsp, %%rbp\n"
   );
   emit_ast(ast, env, list_of_Var_length(env->vars) + 1);
+  printf("\tmov $0, %%eax\n");
   printf("\tpopq %%rbp\n");
   printf("\tret\n");
 }

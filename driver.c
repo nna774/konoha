@@ -1,7 +1,5 @@
 #include <stdio.h>
 
-extern int mymain(void);
-
 int return42() {
   return 42;
 }
@@ -26,8 +24,6 @@ int add6(int n, int m, int o, int p, int q, int r) {
   return n + m + o + p + q + r;
 }
 
-int main(int argc, char **argv) {
-  int val = mymain();
-  printf("%d\n", val);
-  return 0;
+void print_int(int n) {
+  printf("%d\n", n);
 }
