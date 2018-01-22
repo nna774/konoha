@@ -126,10 +126,7 @@ bool same_name_var(Var const* lhs, Var const* rhs) {
 Ast* make_ast_symbol_ref(Env* env, Var* var) {
   Var* const v = list_of_Var_find_cond(env->vars, var, same_name_var);
   assert(v != NULL);
-  Ast* const ast = new_Ast();
-  ast->type = AST_SYM;
-  ast->var = v;
-  return ast;
+  return to_ast(AST_SYM, v);
 }
 
 Ast* make_ast_bi_op(AstType const t, Ast const* lhs, Ast const* rhs) {
@@ -156,8 +153,19 @@ Ast* to_ast(AstType t, void* v) {
   case AST_STATEMENT:
     ast->statement = v;
     break;
+  case AST_STATEMENTS:
+    ast->statements = new_Statements();
+    ast->statements->val = v;
+    break;
+  case AST_BLOCK:
+    ast->block = new_Block();
+    ast->block->val = v;
+    break;
+  case AST_SYM_DEFINE:
+    ast->var = v;
+    break;
   default:
-    warn("unimpled type(%d)", t);
+    warn("unimpled type(%s)", show_AstType(t));
   }
   return ast;
 }
@@ -167,20 +175,12 @@ Ast* make_ast_statement(Statement* s) {
 }
 
 Ast* make_ast_statements(INTRUSIVE_LIST_OF(Statement) ss) {
-  Ast* const ast = new_Ast();
-  ast->type = AST_STATEMENTS;
-  ast->statements = new_Statements();
-  ast->statements->val = ss;
-  return ast;
+  return to_ast(AST_STATEMENTS, ss);
 }
 
-Ast* make_ast_block(Ast* ss) {
-  assert(ss->type == AST_STATEMENTS);
-  Ast* const ast = new_Ast();
-  ast->type = AST_BLOCK;
-  ast->block = new_Block();
-  ast->block->val = ss;
-  return ast;
+Ast* make_ast_block(Ast* b) {
+  assert(b->type == AST_STATEMENTS);
+  return to_ast(AST_BLOCK, b);
 }
 
 Ast* make_ast_funcall(char const* name, int argc, Ast** args) {
@@ -221,10 +221,7 @@ Var* add_sym_to_env(Env* env, Type* type, char const* sym_name) {
 
 Ast* make_ast_val_define(Env* env, Type* t, char const* sym_name) {
   Var* v = add_sym_to_env(env, t, sym_name);
-  Ast* ast = new_Ast();
-  ast->type = AST_SYM_DEFINE;
-  ast->var = v;
-  return ast;
+  return to_ast(AST_SYM_DEFINE, v);
 }
 
 Ast* parse_int(FILE* fp, int sign) {
