@@ -81,5 +81,6 @@ Ast* make_ast_statement(Statement*);
 void print_ast(Ast const*);
 void print_env(Env const*);
 char const * op_from_type(Type t);
+char const* show_Type(Type t);
 
 #endif // NNA774_KONOHA_AST_H
