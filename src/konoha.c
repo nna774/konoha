@@ -6,14 +6,14 @@
 
 char const* const REGS[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 
-void save_regs(int depth) {
-  for(int i = 0; i < 6; ++i) {
+void save_regs(int argc, int depth) {
+  for(int i = 0; i < argc; ++i) {
     int const offset = (depth + i) * 4;
     printf("\tmov %%%s, -%d(%%rbp)\n", REGS[i], offset);
   }
 }
-void restore_regs(int depth) {
-  for(int i = 0; i < 6; ++i) {
+void restore_regs(int argc, int depth) {
+  for(int i = 0; i < argc; ++i) {
     int const offset = (depth + i) * 4;
     printf("\tmov -%d(%%rbp), %%%s\n", offset, REGS[i]);
   }
@@ -66,19 +66,19 @@ void emit_ast(Ast const* ast, Env const* env, int depth) {
     break;
   case AST_FUNCALL:
   {
-    save_regs(depth);
     int const argc = ast->funcall->argc;
     char const* const name = ast->funcall->name;
     if(argc > 6) {
       warn("argc over 6 is not impled now");
       break;
     }
+    save_regs(argc, depth);
     for(int i = 0; i < argc; ++i) {
       emit_ast(ast->funcall->args[i], env, depth+6);
       printf("\tmov %%eax, %%%s\n", REGS[i]);
     }
     printf("\tcall %s\n", name);
-    restore_regs(depth);
+    restore_regs(argc, depth);
     break;
   }
   case AST_BLOCK:
