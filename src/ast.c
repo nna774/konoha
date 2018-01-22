@@ -32,14 +32,14 @@ Ast** new_Ast_array(size_t size) {
 }
 
 Env* new_Env() {
-  Env* e = malloc(sizeof(Env));
+  Env* const e = malloc(sizeof(Env));
   e->parent = NULL;
   e->vars = new_list_of_Var();
   return e;
 }
 
 Var* new_Var() {
-  Var* v = malloc(sizeof(Var));
+  Var* const v = malloc(sizeof(Var));
   v->name = NULL;
   v->offset = 0;
   init_Var_hook(v);
@@ -47,7 +47,7 @@ Var* new_Var() {
 }
 
 FunCall* new_FunCall() {
-  FunCall* f = malloc(sizeof(FunCall));
+  FunCall* const f = malloc(sizeof(FunCall));
   f->name = NULL;
   f->argc = 0;
   f->args = NULL;
@@ -55,20 +55,20 @@ FunCall* new_FunCall() {
 }
 
 Var* copy_var(Var const* _v) {
-  Var* v = malloc(sizeof(Var));
+  Var* const v = malloc(sizeof(Var));
   memcpy(v, _v, sizeof(Var));
   return v;
 }
 
 Statement* new_Statement() {
-  Statement* s = malloc(sizeof(Statement));
+  Statement* const s = malloc(sizeof(Statement));
   s->val = NULL;
   init_Statement_hook(s);
   return s;
 }
 
 Statements* new_Statements() {
-  Statements* s = malloc(sizeof(Statements));
+  Statements* const s = malloc(sizeof(Statements));
   s->val = NULL;
   return s;
 }
