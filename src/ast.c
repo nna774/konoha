@@ -234,7 +234,7 @@ Var* find_var_by_name(Env* env, char const* name) {
 
 Var* add_sym_to_env(Env* env, Type* type, char const* sym_name) {
   assert(find_type_by_name(env, type->name) != NULL);
-  if(!find_var_by_name(env, sym_name)) {
+  if(find_var_by_name(env, sym_name)) {
     warn("identifier %s is already declared\n", sym_name);
   }
 
