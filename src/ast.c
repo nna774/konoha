@@ -28,7 +28,11 @@ Ast* new_Ast() {
 }
 
 Ast** new_Ast_array(size_t size) {
-  return malloc(sizeof(Ast) * (size + 1));
+  Ast** const arr = malloc(sizeof(Ast*) * (size));
+  for(size_t i = 0; i < size; ++i) {
+    arr[i] = new_Ast();
+  }
+  return arr;
 }
 
 Env* new_Env() {
@@ -154,18 +158,16 @@ Ast* make_ast_statements(INTRUSIVE_LIST_OF(Statement) ss) {
 }
 
 Ast* make_ast_funcall(char const* name, int argc, Ast** args) {
-  assert(args != NULL);
   Ast* const ast = new_Ast();
-  Ast** const _args = new_Ast_array(argc);
-  for(int i = 0; i < argc; ++i) {
-    assert(args[i] != NULL);
-    _args[i] = args[i];
-  }
   ast->type = AST_FUNCALL;
   ast->funcall = new_FunCall();
   ast->funcall->name = name;
   ast->funcall->argc = argc;
-  ast->funcall->args = _args;
+  if (argc == 0) {
+    return ast;
+  }
+  assert(args != NULL);
+  ast->funcall->args = args;
   return ast;
 }
 
@@ -246,17 +248,19 @@ Ast* parse_prim(FILE* fp, Env* env) {
 }
 
 Ast* parse_funcall(FILE* fp, Env* env, char const* name) {
-  Ast* args[MAX_ARGC];
+  Ast** const args = new_Ast_array(MAX_ARGC);
   int argc = 0;
-  for(; argc < MAX_ARGC; ++argc) {
+  for(; argc <= MAX_ARGC; ++argc) {
     skip(fp);
     int const c = peek(fp);
     if(c == ')') {
+      getc(fp);
       break;
     }
+    if(argc == 0) { continue; }
     if(c == EOF) { warn("unexpected EOF\n"); return NULL; }
     int const prio = 0;
-    args[argc] = parse_expr(fp, env, prio);
+    args[argc - 1] = parse_expr(fp, env, prio);
     skip(fp);
     int const c2 = getc(fp);
     if(c2 == EOF) { warn("unexpected EOF\n"); return NULL; }
@@ -264,11 +268,11 @@ Ast* parse_funcall(FILE* fp, Env* env, char const* name) {
     if(c2 == ',') { /* nop */ }
     else { warn("unexpected char(%c)\n", c2); return NULL; }
   }
-  if(argc == MAX_ARGC) {
+  if(argc > MAX_ARGC) {
     warn("too many arg(max argc is %d)\n", MAX_ARGC);
     return NULL;
   }
-  return make_ast_funcall(name, argc + 1, args);
+  return make_ast_funcall(name, argc, args);
 }
 
 int priority(char op) {
@@ -431,10 +435,17 @@ void print_ast(Ast const* ast) {
     break;
   case AST_FUNCALL:
   {
-    printf("(%s ", ast->funcall->name);
+    printf("(%s", ast->funcall->name);
     int const argc = ast->funcall->argc;
+    if (argc == 0) {
+      printf(")");
+      break;
+    }
+    printf(" ");
     for(int i = 0; i < argc; ++i) {
-      print_ast(ast->funcall->args[i]);
+      Ast const* arg = ast->funcall->args[i];
+      assert(arg != NULL);
+      print_ast(arg);
       if(i != argc - 1) {
         printf(" ");
       }

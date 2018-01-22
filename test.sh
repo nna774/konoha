@@ -91,7 +91,7 @@ test_ast "(imul (add 1 2) 3)" "(1+2)*3;"
 test_ast "(add 1 (imul 2 3))" "1+(2*3);"
 test_ast "(imul (add 1 2) (add 3 4))" "(1+2)*(3+4);"
 
-#test_ast "(f)" "f();"
+test_ast "(f)" "f();"
 test_ast "(f 1)" "f(1);"
 test_ast "(f 1 2)" "f(1, 2);"
 test_ast "(f 1 2 3)" "f(1, 2 ,3);"
