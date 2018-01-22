@@ -31,6 +31,8 @@ struct Statements;
 typedef struct Statements Statements;
 struct Block;
 typedef struct Block Block;
+struct FunCall;
+typedef struct FunCall FunCall;
 
 DEFINE_INTRUSIVE_LIST(Var);
 DEFINE_INTRUSIVE_LIST(Statement);
@@ -64,11 +66,11 @@ struct Block {
   Ast* val;
 };
 
-typedef struct FunCall {
+struct FunCall {
   char const* name;
   int argc;
   Ast** args;
-} FunCall;
+};
 
 struct Ast {
   AstType type;
