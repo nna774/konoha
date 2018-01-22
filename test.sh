@@ -158,6 +158,7 @@ a = a + 2;
 b = a + b;
 a = a * b * 2;
 print_int(a);}"
+test "1" "{int a;a = 2; a = a - 1; print_int(a);}"
 
 test "1" "{print_int((1));}"
 test "9" "{print_int((1+2)*3);}"
