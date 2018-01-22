@@ -24,7 +24,7 @@ void emit_int(Ast const* ast) {
 }
 
 void emit_ast(Ast const* ast, Env const* env, int depth) {
-  Type const t = ast->type;
+  AstType const t = ast->type;
   switch(t) {
   case AST_INT:
     emit_int(ast);
@@ -85,7 +85,7 @@ void emit_ast(Ast const* ast, Env const* env, int depth) {
     emit_ast(ast->block->val, env, depth);
     break;
   default:
-    warn("never come!!!(type: %s)\n", show_Type(t));
+    warn("never come!!!(type: %s)\n", show_AstType(t));
     break;
   }
 }

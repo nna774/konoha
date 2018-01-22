@@ -17,7 +17,7 @@ typedef enum {
 
   AST_EMPTY,
   AST_UNKNOWN = 999,
-} Type;
+} AstType;
 
 struct Ast;
 typedef struct Ast Ast;
@@ -71,7 +71,7 @@ typedef struct FunCall {
 } FunCall;
 
 struct Ast {
-  Type type;
+  AstType type;
   union {
     int int_val;
     Bi_op bi_op;
@@ -88,7 +88,7 @@ Ast* make_ast(Env*);
 Ast* make_ast_statement(Statement*);
 void print_ast(Ast const*);
 void print_env(Env const*);
-char const * op_from_type(Type t);
-char const* show_Type(Type t);
+char const * op_from_type(AstType t);
+char const* show_AstType(AstType t);
 
 #endif // NNA774_KONOHA_AST_H

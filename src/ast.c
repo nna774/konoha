@@ -6,11 +6,11 @@
 #include "ast.h"
 #include "utils.h"
 
-Ast* to_ast(Type t, void*);
+Ast* to_ast(AstType t, void*);
 Ast* parse_expr(FILE* fp, Env* env, int prio);
 Ast* parse_funcall(FILE* fp, Env* env, char const* name);
 Ast* parse_block(FILE* fp, Env* env);
-char const* show_Type(Type);
+char const* show_AstType(AstType);
 int const MAX_ARGC = 6;
 
 void skip(FILE* fp) {
@@ -85,7 +85,7 @@ Block* new_Block() {
 
 int const MAX_BUF_LEN = 256;
 
-char const * op_from_type(Type t) {
+char const * op_from_type(AstType t) {
   switch(t) {
   case AST_OP_PLUS:
     return "add";
@@ -121,7 +121,7 @@ Ast* make_ast_symbol(Env* env, char const* name) {
   return ast;
 }
 
-Ast* make_ast_bi_op(Type const t, Ast const* lhs, Ast const* rhs) {
+Ast* make_ast_bi_op(AstType const t, Ast const* lhs, Ast const* rhs) {
   Ast* const ast = new_Ast();
   ast->type = t;
   ast->bi_op.lhs = lhs;
@@ -135,7 +135,7 @@ Statement* make_statement(Ast* st) {
   return s;
 }
 
-Ast* to_ast(Type t, void* v) {
+Ast* to_ast(AstType t, void* v) {
   Ast* const ast = new_Ast();
   ast->type = t;
   switch(t) {
@@ -303,7 +303,7 @@ int priority(char op) {
   }
 }
 
-Type detect_bi_op(char c) {
+AstType detect_bi_op(char c) {
   switch(c) {
   case '+':
     return AST_OP_PLUS;
@@ -336,7 +336,7 @@ Ast* parse_expr(FILE* fp, Env* env, int prio) {
         ungetc(c, fp);
         return ast;
       }
-      Type const t = detect_bi_op(c);
+      AstType const t = detect_bi_op(c);
       skip(fp);
       Ast* const lhs = ast;
       Ast* const rhs = parse_expr(fp, env, c_prio + 1);
@@ -439,7 +439,7 @@ Ast* make_ast(Env* env) {
 
 void print_ast(Ast const* ast) {
   assert(ast != NULL);
-  Type const t = ast->type;
+  AstType const t = ast->type;
   switch(t) {
   case AST_INT:
     printf("%d", ast->int_val);
@@ -501,11 +501,11 @@ void print_ast(Ast const* ast) {
   case AST_EMPTY:
     break;
   default:
-    warn("never come!!!(type: %s)\n", show_Type(t));
+    warn("never come!!!(type: %s)\n", show_AstType(t));
   }
 }
 
-char const* show_Type(Type t) {
+char const* show_AstType(AstType t) {
   switch(t) {
   case AST_INT:
     return "AST_INT";
