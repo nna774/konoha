@@ -19,10 +19,6 @@ void restore_regs(int argc, int depth) {
   }
 }
 
-void emit_int(Ast const* ast) {
-  printf("\tmov $%d, %%eax\n", ast->int_val);
-}
-
 void emit_int_to(Ast const* ast, char const* reg) {
   printf("\tmov $%d, %%%s\n", ast->int_val, reg);
 }
@@ -32,7 +28,7 @@ void emit_ast_impl(Ast const* ast, Env const* env, int depth, char const* to) {
   AstType const t = ast->type;
   switch(t) {
   case AST_INT:
-    emit_int(ast);
+    emit_int_to(ast, to);
     break;
   case AST_OP_PLUS:
   case AST_OP_MULTI:
