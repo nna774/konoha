@@ -90,11 +90,11 @@ Statements* new_Statements() {
   return s;
 }
 
-Block* new_Block(Env* parent) {
+Block* new_Block(Env* env) {
   Block* const b = malloc(sizeof(Block));
   b->val = NULL;
-  assert(parent != NULL);
-  b->env = expand_Env(parent);
+  assert(env != NULL);
+  b->env = env;
   return b;
 }
 
@@ -210,6 +210,19 @@ Ast* make_ast_funcall(char const* name, int argc, Ast** args) {
   return ast;
 }
 
+Type* find_type_by_name(Env const* env, char const* name) {
+  assert(env->types != NULL);
+  FOREACH(Type, env->types, t) {
+    if(!strcmp(t->name, name)) {
+      return t;
+    }
+  }
+  if(env->parent != NULL) {
+    return find_type_by_name(env->parent, name);
+  }
+  return NULL;
+}
+
 Var* find_var_by_name(Env* env, char const* name) {
   FOREACH(Var, env->vars, v) {
     if(!strcmp(v->name, name)) {
@@ -220,13 +233,12 @@ Var* find_var_by_name(Env* env, char const* name) {
 }
 
 Var* add_sym_to_env(Env* env, Type* type, char const* sym_name) {
-  Type* const t = list_of_Type_find(env->types, type);
-  assert(t != NULL);
+  assert(find_type_by_name(env, type->name) != NULL);
   if(!find_var_by_name(env, sym_name)) {
     warn("identifier %s is already declared\n", sym_name);
   }
 
-  Var* const v = new_Var(t, sym_name);
+  Var* const v = new_Var(type, sym_name);
   list_of_Var_append(env->vars, v);
   v->offset = list_of_Var_length(env->vars) * 4;
   return v;
@@ -263,20 +275,10 @@ char const* read_symbol(FILE* fp) {
   return buf;
 }
 
-Type* isType(Env const* env, char const* name) {
-  assert(env->types != NULL);
-  FOREACH(Type, env->types, t) {
-    if(!strcmp(t->name, name)) {
-      return t;
-    }
-  }
-  return NULL;
-}
-
 Ast* parse_symbol_or_funcall(FILE* fp, Env* env) {
   char const* name = read_symbol(fp);
   Type* t;
-  if(t = isType(env, name), t != NULL) {
+  if(t = find_type_by_name(env, name), t != NULL) {
     skip(fp);
     char const* sym_name = read_symbol(fp);
     skip(fp);
@@ -432,6 +434,8 @@ Ast* parse_expr(FILE* fp, Env* env, int prio) {
       skip(fp);
       Ast* const lhs = ast;
       Ast* const rhs = parse_expr(fp, env, prio);
+      assert(lhs->type == AST_SYM);
+      lhs->var->initialized = true;
       ast = make_ast_bi_op(AST_OP_ASSIGN, lhs, rhs);
       break;
     }
@@ -502,13 +506,14 @@ Ast* parse_statements(FILE* fp, Env* env) {
 Ast* parse_block(FILE* fp, Env* env) {
   skip(fp);
   int c = getc(fp);
+  Env* expanded = expand_Env(env);
   if(c != '{') { warn("unexpected char(%c)\n", c); return NULL; }
-  Ast* const ss = parse_statements(fp, env);
+  Ast* const ss = parse_statements(fp, expanded);
   c = getc(fp);
   if(c != '}') { warn("unexpected char(%c)\n", c); return NULL; }
   assert(ss->type == AST_STATEMENTS);
   assert(ss->statements != NULL);
-  return make_ast_block(env, ss);
+  return make_ast_block(expanded, ss);
 }
 
 Ast* parse(FILE* fp, Env* env) {
@@ -538,17 +543,16 @@ void print_ast(Ast const* ast) {
     printf(")");
     break;
   case AST_SYM:
+    if(!ast->var->initialized) {
+      warn("%s is not initialized, but evaled\n", ast->var->name);
+    }
     printf("(eval %s)", ast->var->name);
     break;
   case AST_SYM_DECLER:
     warn("unimpled");
     break;
   case AST_SYM_DEFINE:
-    if(ast->var->initialized) {
-      warn("unimpled");
-    } else {
-      printf("(defvar %s)", ast->var->name);
-    }
+    printf("(defvar %s)", ast->var->name);
     break;
   case AST_OP_ASSIGN:
     assert(ast->bi_op.lhs->type == AST_SYM);
