@@ -15,6 +15,8 @@ typedef enum {
   AST_STATEMENT,
   AST_STATEMENTS,
   AST_FUNCALL,
+  AST_FUNDECLAR,
+  AST_FUNDEFIN,
   AST_BLOCK,
 
   AST_EMPTY,
@@ -37,6 +39,10 @@ struct FunCall;
 typedef struct FunCall FunCall;
 struct Type;
 typedef struct Type Type;
+struct FunType;
+typedef struct FunType FunType;
+struct FunDef;
+typedef struct FunDef FunDef;
 
 DEFINE_INTRUSIVE_LIST(Type);
 DEFINE_INTRUSIVE_LIST(Var);
@@ -87,6 +93,19 @@ struct FunCall {
   Ast** args;
 };
 
+struct FunType {
+  Type const* return_type;
+  int argc;
+  Type** arg_types;
+};
+
+struct FunDef {
+  FunType type;
+  char const* name;
+  Var** args;
+  Ast* body;
+};
+
 struct Ast {
   AstType type;
   union {
@@ -97,6 +116,7 @@ struct Ast {
     Statements* statements;
     FunCall* funcall;
     Block* block;
+    FunDef* fundef;
   };
 };
 

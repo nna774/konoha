@@ -106,6 +106,19 @@ Type* new_Type(char const* name) {
   return t;
 }
 
+FunDef* new_FunDef(FunType type, char const* name, Var** args, Ast* body) {
+  assert(name != NULL);
+  assert(args != NULL);
+  assert(body != NULL);
+  assert(body->type == AST_BLOCK);
+  FunDef* const t = malloc(sizeof(FunDef));
+  t->type = type;
+  t->name = name;
+  t->args = args;
+  t->body = body;
+  return t;
+}
+
 int const MAX_BUF_LEN = 256;
 
 char const * op_from_type(AstType t) {
@@ -516,8 +529,63 @@ Ast* parse_block(FILE* fp, Env* env) {
   return make_ast_block(expanded, ss);
 }
 
+Type* read_type(FILE* fp, Env* env) {
+  char const* const name = read_symbol(fp);
+  Type* const type = find_type_by_name(env, name);
+  assert(type != NULL);
+  return type;
+}
+
+Ast* parse_fundef(FILE* fp, Env* env) {
+  Type* const ret_type = read_type(fp, env);
+  skip(fp);
+  char const* const name = read_symbol(fp);
+  skip(fp);
+  int const open = getc(fp);
+  if(open != '(') { warn("unexpected char(%c)\n", open); return NULL; }
+  Env* const expanded = expand_Env(env);
+  Type** arg_types = malloc(sizeof(Type*) * MAX_ARGC);
+  Var** args = malloc(sizeof(Var*) * MAX_ARGC);
+  int argc = 0;
+  for(; argc <= MAX_ARGC + 1; ++argc) {
+    skip(fp);
+    int const c0 = peek(fp);
+    if(c0 == ')') {
+      getc(fp);
+      break;
+    }
+    if(argc == 0) { continue; }
+    skip(fp);
+    Type* const type = read_type(fp, env);
+    arg_types[argc - 1] = type;
+    skip(fp);
+    char const* const name = read_symbol(fp);
+    args[argc - 1] = add_sym_to_env(expanded, type, name);
+    int const c = peek(fp);
+    if(c == ',') {
+      getc(fp);
+    }
+    if(c == ')') {
+      getc(fp);
+      break;
+    }
+  }
+
+  Ast* const body = parse_block(fp, expanded);
+  FunType t = {
+    ret_type,
+    argc,
+    arg_types,
+  };
+
+  Ast* const ast = new_Ast();
+  ast->type = AST_FUNDEFIN;
+  ast->fundef = new_FunDef(t, name, args, body);
+  return ast;
+}
+
 Ast* parse(FILE* fp, Env* env) {
-  Ast* const ast = parse_block(fp, env);
+  Ast* const ast = parse_fundef(fp, env);
   return ast;
 }
 
@@ -588,6 +656,36 @@ void print_ast(Ast const* ast) {
     printf(")");
     break;
   }
+  case AST_FUNDEFIN:
+  {
+    FunDef const* const func = ast->fundef;
+    assert(func != NULL);
+    printf("(defun %s<%s(", func->name, func->type.return_type->name);
+    for(int i = 0; i < func->type.argc; ++i) {
+      Type const* const type = func->type.arg_types[i];
+      assert(type != NULL);
+      printf("%s", type->name);
+      if(i != func->type.argc - 1) {
+        printf(", ");
+      }
+    }
+    printf(")> (");
+
+    for(int i = 0; i < func->type.argc; ++i) {
+      assert(func->args != NULL);
+      Var const* const arg = func->args[i];
+      assert(arg != NULL);
+      assert(arg->name != NULL);
+      printf("%s", arg->name);
+      if(i != func->type.argc - 1) {
+        printf(", ");
+      }
+    }
+    printf(") ");
+    print_ast(func->body);
+    printf(")");
+    break;
+  }
   case AST_BLOCK:
   {
     printf("(do ");
@@ -626,6 +724,10 @@ char const* show_AstType(AstType t) {
     return "AST_STATEMENTS";
   case AST_FUNCALL:
     return "AST_FUNCALL";
+  case AST_FUNDEFIN:
+    return "AST_FUNDEFIN";
+  case AST_FUNDECLAR:
+    return "AST_FUNDECLAR";
   case AST_EMPTY:
     return "AST_EMPTY";
   case AST_BLOCK:

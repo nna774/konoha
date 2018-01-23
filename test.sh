@@ -49,6 +49,14 @@ test_ast() {
     : ok
 }
 
+test_ast "(defun f<int()> () (do ))" "int f() {}"
+test_ast "(defun f<int(int)> (n) (do ))" "int f(int n) {}"
+test_ast "(defun f<int(int, int)> (n, m) (do ))" "int f(int n, int m) {}"
+test_ast "(defun f<int(int, int, int)> (a, b, c) (do ))" "int f(int a, int b, int c) {}"
+test_ast "(defun f<int(int, int, int, int)> (a, b, c, d) (do ))" "int f(int a, int b, int c, int d) {}"
+test_ast "(defun f<int(int, int, int, int, int)> (a, b, c, d, e) (do ))" "int f(int a, int b, int c, int d, int e) {}"
+test_ast "(defun f<int(int, int, int, int, int, int)> (a, b, c, d, e, _) (do ))" "int f(int a, int b, int c, int d, int e, int _) {}"
+
 test_ast "(do )" "{}"
 
 test_ast "(do 0)" "{0;}"
