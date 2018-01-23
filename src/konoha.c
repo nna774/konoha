@@ -125,19 +125,27 @@ void emit_ast(Ast const* ast, Env const* env, int depth) {
   emit_ast_impl(ast, env, depth, NULL);
 }
 
-void emit(Ast const* ast, Env const* env) {
+void emit_func(Ast const* ast, Env const* env) {
   assert(ast != NULL);
+  assert(ast->type == AST_FUNDEFIN);
+  FunDef const* const func = ast->fundef;
+
   printf(
     "\t.text\n"
     "\t.global main\n"
-    "main:\n"
+    "%s:\n"
     "\tpushq %%rbp\n"
     "\tmovq %%rsp, %%rbp\n"
+    , func->name
   );
-  emit_ast(ast, env, list_of_Var_length(env->vars) + 1);
+  emit_ast(func->body, env, list_of_Var_length(env->vars) + 1);
   printf("\tmov $0, %%eax\n");
   printf("\tpopq %%rbp\n");
   printf("\tret\n");
+}
+
+void emit(Ast const* ast, Env const* env) {
+  emit_func(ast, env);
 }
 
 int main(int argc, char** argv) {

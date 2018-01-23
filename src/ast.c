@@ -537,6 +537,7 @@ Type* read_type(FILE* fp, Env* env) {
 }
 
 Ast* parse_fundef(FILE* fp, Env* env) {
+  skip(fp);
   Type* const ret_type = read_type(fp, env);
   skip(fp);
   char const* const name = read_symbol(fp);
