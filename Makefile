@@ -9,11 +9,14 @@ $(TARGET): build
 build:
 	$(MAKE) -C $(SRCDIR) build
 
-clean: clean_src
-	$(RM) $(TARGET) *.o ./$(TMPDIR)/*
+clean: clean_without_target
+	$(RM) $(TARGET)
 
 clean_src:
 	$(MAKE) -C $(SRCDIR) clean
+
+clean_without_target: clean_src
+	$(RM) *.o ./$(TMPDIR)/*
 
 test: $(TARGET)
 	mkdir -p "$(TMPDIR)"
