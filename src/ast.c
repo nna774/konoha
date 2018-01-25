@@ -59,7 +59,6 @@ Var* new_Var(Type* t, char const* name) {
   v->initialized = false;
   v->defined = false;
   v->offset = 0;
-  init_Var_hook(v);
   return v;
 }
 
@@ -80,7 +79,6 @@ Var* copy_var(Var const* _v) {
 Statement* new_Statement() {
   Statement* const s = malloc(sizeof(Statement));
   s->val = NULL;
-  init_Statement_hook(s);
   return s;
 }
 
@@ -102,7 +100,6 @@ Type* new_Type(char const* name) {
   assert(name != NULL);
   Type* const t = malloc(sizeof(Type));
   t->name = name;
-  init_Type_hook(t);
   return t;
 }
 
@@ -196,7 +193,7 @@ Ast* make_ast_statement(Statement* s) {
   return to_ast(AST_STATEMENT, s);
 }
 
-Ast* make_ast_statements(INTRUSIVE_LIST_OF(Statement) ss) {
+Ast* make_ast_statements(LIST_OF(Statement) ss) {
   return to_ast(AST_STATEMENTS, ss);
 }
 
@@ -500,7 +497,7 @@ Statement* parse_statement(FILE* fp, Env* env) {
 }
 
 Ast* parse_statements(FILE* fp, Env* env) {
-  INTRUSIVE_LIST_OF(Statement) ss = new_list_of_Statement();
+  LIST_OF(Statement) ss = new_list_of_Statement();
   int c;
   while(c = peek(fp), c != EOF) {
     if(c == '}') {
@@ -585,8 +582,13 @@ Ast* parse_fundef(FILE* fp, Env* env) {
   return ast;
 }
 
-Ast* parse(FILE* fp, Env* env) {
+Ast* parse_global(FILE* fp, Env* env) {
   Ast* const ast = parse_fundef(fp, env);
+  return ast;
+}
+
+Ast* parse(FILE* fp, Env* env) {
+  Ast* const ast = parse_global(fp, env);
   return ast;
 }
 
@@ -633,10 +635,12 @@ void print_ast(Ast const* ast) {
     print_ast(ast->statement->val);
     break;
   case AST_STATEMENTS:
+  {
     FOREACH(Statement, ast->statements->val, s) {
       print_ast(make_ast_statement(s));
     }
     break;
+  }
   case AST_FUNCALL:
   {
     printf("(%s", ast->funcall->name);

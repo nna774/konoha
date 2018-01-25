@@ -77,6 +77,7 @@ void emit_ast_impl(Ast const* ast, Env const* env, int depth, char const* to) {
     emit_ast_impl(ast->statement->val, env, depth, to);
     break;
   case AST_STATEMENTS:
+  {
     FOREACH(Statement, ast->statements->val, s) {
       emit_ast_impl(make_ast_statement(s), env, depth + 1, NULL);
     }
@@ -84,6 +85,7 @@ void emit_ast_impl(Ast const* ast, Env const* env, int depth, char const* to) {
       printf("\tmov %%eax, %s\n", to);
     }
     break;
+  }
   case AST_FUNCALL:
   {
     int const argc = ast->funcall->argc;

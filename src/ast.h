@@ -44,9 +44,9 @@ typedef struct FunType FunType;
 struct FunDef;
 typedef struct FunDef FunDef;
 
-DEFINE_INTRUSIVE_LIST(Type);
-DEFINE_INTRUSIVE_LIST(Var);
-DEFINE_INTRUSIVE_LIST(Statement);
+DEFINE_LIST(Type);
+DEFINE_LIST(Var);
+DEFINE_LIST(Statement);
 
 typedef struct Bi_op {
   Ast const* lhs;
@@ -55,7 +55,6 @@ typedef struct Bi_op {
 
 struct Type {
   char const* name;
-  INTRUSIVE_LIST_HOOK(Type);
 };
 
 struct Var {
@@ -64,22 +63,20 @@ struct Var {
   bool initialized;
   bool defined;
   int offset;
-  INTRUSIVE_LIST_HOOK(Var);
 };
 
 struct Env {
   Env const* parent;
-  INTRUSIVE_LIST_OF(Var) vars;
-  INTRUSIVE_LIST_OF(Type) types;
+  LIST_OF(Var) vars;
+  LIST_OF(Type) types;
 };
 
 struct Statement {
   Ast* val;
-  INTRUSIVE_LIST_HOOK(Statement);
 };
 
 struct Statements {
-  INTRUSIVE_LIST_OF(Statement) val;
+  LIST_OF(Statement) val;
 };
 
 struct Block {
