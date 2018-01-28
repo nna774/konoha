@@ -17,16 +17,6 @@ Ast* parse_block(FILE* fp, Env* env);
 char const* show_AstType(AstType);
 int const MAX_ARGC = 6;
 
-void skip(FILE* fp) {
-  int c;
-  while(c = getc(fp), c != EOF) {
-    if(!isspace(c)) {
-      break;
-    }
-  }
-  ungetc(c, fp);
-}
-
 Ast* new_Ast() {
   return malloc(sizeof(Ast));
 }

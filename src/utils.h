@@ -17,6 +17,7 @@
 #define _CONCAT3_I(x, y, z) x ## y ## z
 
 int peek(FILE* fp);
+void skip(FILE* fp);
 void warn(char const* fmt, ...);
 
 #endif // NNA774_KONOHA_UTILS_H
