@@ -5,7 +5,7 @@ include ../Makefile.common
 
 SRCS := memwatch.c
 OBJS := $(SRCS:%.c=%.o)
-CFLAGS :=
+CFLAGS := -w
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
