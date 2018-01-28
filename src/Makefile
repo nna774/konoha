@@ -5,7 +5,7 @@ SRC_DIR := .
 DEBUG_DIR := ../debug
 
 include $(TOP_DIR)/Makefile.common
-SRCS := konoha.c ast.c utils.c use_list.c enum.c
+SRCS := konoha.c ast.c utils.c use_list.c enum.c string.c
 OBJS := $(SRCS:%.c=%.o)
 DEPS := $(SRCS:%.c=%.d)
 
