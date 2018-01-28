@@ -7,6 +7,8 @@
 
 #define CONCAT(x, y) _CONCAT_I(x, y)
 #define _CONCAT_I(x, y) x ## y
+#define CONCAT3(x, y, z) _CONCAT3_I(x, y, z)
+#define _CONCAT3_I(x, y, z) x ## y ## z
 
 int peek(FILE* fp);
 void warn(char const* fmt, ...);
