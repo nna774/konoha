@@ -24,6 +24,8 @@
   int CONCAT3(list_of_, Type, _length)(INTRUSIVE_LIST_OF(Type));\
   Type* CONCAT3(list_of_, Type, _find)(INTRUSIVE_LIST_OF(Type), Type*);\
   Type* CONCAT3(list_of_, Type, _find_cond)(INTRUSIVE_LIST_OF(Type), Type*, bool (*f)(Type const*, Type const*));\
+  Type* CONCAT3(list_of_, Type, _pop)(INTRUSIVE_LIST_OF(Type));\
+  void CONCAT3(list_of_, Type, _push)(INTRUSIVE_LIST_OF(Type), Type*);\
 
 #define USE_INTRUSIVE_LIST(Type) \
   INTRUSIVE_LIST_OF(Type) CONCAT(new_list_of_, Type)() {\
@@ -72,6 +74,23 @@
       if(f(e, t)) return e;\
     }\
     return NULL;\
+  }\
+  Type* CONCAT3(list_of_, Type, _pop)(INTRUSIVE_LIST_OF(Type) l){\
+    assert(l != NULL);\
+    if(l->count == 0){\
+      return NULL;\
+    }\
+    Type* t = l->head;\
+    l->count--;\
+    l->head = t->_hook.next;\
+    t->_hook.next = NULL;\
+    return t;\
+}\
+  void CONCAT3(list_of_, Type, _push)(INTRUSIVE_LIST_OF(Type) l, Type* v) {\
+    assert(l != NULL);\
+    l->count++;\
+    v->_hook.next = l->head;\
+    l->head = v;\
   }\
 
 #define FOREACH(Type, list, val) \
