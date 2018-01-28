@@ -4,10 +4,7 @@
 #include <assert.h>
 #include <string.h>
 
-#define ENUM_SHOW_DEFINE
 #include "ast.h"
-#undef ENUM_SHOW_DEFINE
-
 #include "utils.h"
 
 Ast* to_ast(AstType t, void*);
