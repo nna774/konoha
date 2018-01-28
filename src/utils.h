@@ -20,4 +20,8 @@ int peek(FILE* fp);
 void skip(FILE* fp);
 void warn(char const* fmt, ...);
 
+#ifndef NDEBUG
+char const* show_char(int c);
+#endif
+
 #endif // NNA774_KONOHA_UTILS_H
