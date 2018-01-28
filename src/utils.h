@@ -5,6 +5,12 @@
 #include <stdbool.h>
 #include <assert.h>
 
+#ifdef DEBUG
+#define MEMWATCH
+#define MW_STDIO
+#include "memwatch.h"
+#endif
+
 #define CONCAT(x, y) _CONCAT_I(x, y)
 #define _CONCAT_I(x, y) x ## y
 #define CONCAT3(x, y, z) _CONCAT3_I(x, y, z)

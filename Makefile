@@ -1,6 +1,8 @@
 include Makefile.common
 TMPDIR := tmp
 SRCDIR := src
+DEBUGDIR := debug
+DEBUGFILES := memwatch.log
 
 all: $(TARGET)
 $(TARGET): build
@@ -9,11 +11,19 @@ $(TARGET): build
 build:
 	$(MAKE) -C $(SRCDIR) build
 
-clean: clean_without_target
-	$(RM) $(TARGET)
+debug: clean
+	$(MAKE) -C $(DEBUGDIR) all
+	$(MAKE) -C $(SRCDIR) debug
+	$(CP) $(SRCDIR)/$(TARGET) .
+
+clean: clean_without_target clean_debug
+	$(RM) $(TARGET) $(DEBUGFILES)
 
 clean_src:
 	$(MAKE) -C $(SRCDIR) clean
+
+clean_debug:
+	$(MAKE) -C $(DEBUGDIR) clean
 
 clean_without_target: clean_src
 	$(RM) *.o ./$(TMPDIR)/*
