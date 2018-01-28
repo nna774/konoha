@@ -5,8 +5,10 @@ jobs:
       - image: gcc:latest
     steps:
       - checkout
+      - run: cat src/* | wc -l
       - run: make all
       - run: make test
+      - run: make debug
 workflows:
   version: 2
   all:
