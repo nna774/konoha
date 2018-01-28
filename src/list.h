@@ -22,8 +22,8 @@
   void CONCAT3(init_, Type, _hook)(Type*);\
   void CONCAT3(list_of_, Type, _append)(INTRUSIVE_LIST_OF(Type), Type*);\
   int CONCAT3(list_of_, Type, _length)(INTRUSIVE_LIST_OF(Type));\
-  Type* CONCAT3(list_of_, Type, _find)(INTRUSIVE_LIST_OF(Type), Type*); \
-  Type* CONCAT3(list_of_, Type, _find_cond)(INTRUSIVE_LIST_OF(Type), Type*, bool (*f)(Type const*, Type const*)); \
+  Type* CONCAT3(list_of_, Type, _find)(INTRUSIVE_LIST_OF(Type), Type*);\
+  Type* CONCAT3(list_of_, Type, _find_cond)(INTRUSIVE_LIST_OF(Type), Type*, bool (*f)(Type const*, Type const*));\
 
 #define USE_INTRUSIVE_LIST(Type) \
   INTRUSIVE_LIST_OF(Type) CONCAT(new_list_of_, Type)() {\
@@ -33,7 +33,7 @@
     return l;\
   }\
 \
-  void CONCAT3(init_, Type, _hook)(Type* t) { \
+  void CONCAT3(init_, Type, _hook)(Type* t) {\
     t->_hook.next = NULL;\
   }\
 \
