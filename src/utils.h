@@ -3,6 +3,10 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <assert.h>
+
+#define CONCAT(x, y) _CONCAT_I(x, y)
+#define _CONCAT_I(x, y) x ## y
 
 int peek(FILE* fp);
 void warn(char const* fmt, ...);

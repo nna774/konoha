@@ -4,7 +4,7 @@ TOP_DIR := ..
 SRC_DIR := .
 
 include $(TOP_DIR)/Makefile.common
-SRCS := konoha.c ast.c utils.c use_list.c
+SRCS := konoha.c ast.c utils.c use_list.c enum.c
 OBJS := $(SRCS:%.c=%.o)
 DEPS := $(SRCS:%.c=%.d)
 

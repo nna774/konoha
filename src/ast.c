@@ -3,7 +3,11 @@
 #include <ctype.h>
 #include <assert.h>
 #include <string.h>
+
+#define ENUM_SHOW_DEFINE
 #include "ast.h"
+#undef ENUM_SHOW_DEFINE
+
 #include "utils.h"
 
 Ast* to_ast(AstType t, void*);
@@ -698,46 +702,6 @@ void print_ast(Ast const* ast) {
     break;
   default:
     warn("never come!!!(type: %s)\n", show_AstType(t));
-  }
-}
-
-char const* show_AstType(AstType t) {
-  switch(t) {
-  case AST_INT:
-    return "AST_INT";
-  case AST_OP_PLUS:
-    return "AST_OP_PLUS";
-  case AST_OP_MINUS:
-    return "AST_OP_MINUS";
-  case AST_OP_MULTI:
-    return "AST_OP_MULTI";
-  case AST_OP_ASSIGN:
-    return "AST_OP_ASSIGN";
-  case AST_SYM:
-    return "AST_SYM";
-  case AST_SYM_DECLER:
-    return "AST_SYM_DECLER";
-  case AST_SYM_DEFINE:
-    return "AST_SYM_DEFINE";
-  case AST_STATEMENT:
-    return "AST_STATEMENT";
-  case AST_STATEMENTS:
-    return "AST_STATEMENTS";
-  case AST_FUNCALL:
-    return "AST_FUNCALL";
-  case AST_FUNDEFIN:
-    return "AST_FUNDEFIN";
-  case AST_FUNDECLAR:
-    return "AST_FUNDECLAR";
-  case AST_EMPTY:
-    return "AST_EMPTY";
-  case AST_BLOCK:
-    return "AST_BLOCK";
-  case AST_UNKNOWN:
-    return "AST_UNKNOWN";
-  default:
-    warn("?(type: %d)", t);
-    return "?";
   }
 }
 

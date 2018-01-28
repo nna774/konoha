@@ -1,9 +1,11 @@
 #ifndef NNA774_KONOHA_AST_H
 #define NNA774_KONOHA_AST_H
 
+#include "enum.h"
 #include "list.h"
 
-typedef enum {
+ENUM_WITH_SHOW(
+  AstType,
   AST_INT,
   AST_OP_PLUS,
   AST_OP_MINUS,
@@ -20,8 +22,8 @@ typedef enum {
   AST_BLOCK,
 
   AST_EMPTY,
-  AST_UNKNOWN = 999,
-} AstType;
+  AST_UNKNOWN
+)
 
 struct Ast;
 typedef struct Ast Ast;
@@ -127,6 +129,5 @@ Ast* make_ast_statement(Statement*);
 void print_ast(Ast const*);
 void print_env(Env const*);
 char const * op_from_type(AstType t);
-char const* show_AstType(AstType t);
 
 #endif // NNA774_KONOHA_AST_H
