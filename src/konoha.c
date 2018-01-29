@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <string.h>
 #include "ast.h"
+#include "tokenize.h"
 #include "utils.h"
 
 char const* const REGS[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};

@@ -2,6 +2,7 @@
 #define NNA774_KONOHA_AST_H
 
 #include "enum.h"
+#include "tokenize.h"
 #include "list.h"
 
 ENUM_WITH_SHOW(
