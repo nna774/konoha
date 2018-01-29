@@ -22,7 +22,7 @@ ENUM_WITH_SHOW(
   AST_BLOCK,
 
   AST_EMPTY,
-  AST_UNKNOWN
+  AST_UNKNOWN,
 )
 
 struct Ast;
