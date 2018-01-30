@@ -15,6 +15,7 @@ ENUM_WITH_SHOW(
   BI_OP_T,
   SEMICOLON_T,
   COMMA_T,
+  EOF_T,
 
   UNKNOWN_T,
 )
