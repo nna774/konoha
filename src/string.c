@@ -74,3 +74,8 @@ size_t String_length(String const s) {
 char const* c_str(String const s) {
   return s._si->top;
 }
+
+char head_char(String const s) {
+  assert(s._si->top != NULL);
+  return s._si->top[0];
+}

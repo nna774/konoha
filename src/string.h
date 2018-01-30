@@ -21,5 +21,6 @@ String from_char(char);
 void append_char(String, char);
 size_t String_length(String const);
 char const* c_str(String const);
+char head_char(String const);
 
 #endif // NNA774_KONOHA_STRING_H
