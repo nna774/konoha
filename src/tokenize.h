@@ -35,6 +35,7 @@ typedef INTRUSIVE_LIST_OF(Token) Tokens;
 
 Tokens tokenize(FILE*);
 Token pop_Token(Tokens);
+void push_Token(Tokens, Token);
 Token peek_Token(Tokens);
 void print_Token(Token const*);
 void print_Tokens(INTRUSIVE_LIST_OF(Token));

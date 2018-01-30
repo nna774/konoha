@@ -100,6 +100,10 @@ Token pop_Token(Tokens ts) {
   return *list_of_Token_pop(ts);
 }
 
+void push_Token(Tokens ts, Token t) {
+  list_of_Token_push(ts, &t);
+}
+
 Token peek_Token(Tokens ts) {
   return *(ts->head);
 }
