@@ -92,6 +92,8 @@ INTRUSIVE_LIST_OF(Token) tokenize(FILE* fp) {
     list_of_Token_append(tokens, t);
     skip(fp);
   }
+  Token* eof_t = new_Token(new_String(), EOF_T);
+  list_of_Token_append(tokens, eof_t);
   return tokens;
 }
 
