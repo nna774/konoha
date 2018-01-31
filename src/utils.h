@@ -18,7 +18,10 @@
 
 int peek(FILE* fp);
 void skip(FILE* fp);
-void warn(char const* fmt, ...);
+void _warn_impl(int line, char const* fmt, ...);
+
+#define warn(...) \
+  _warn_impl(__LINE__, __VA_ARGS__ )
 
 #ifndef NDEBUG
 char const* show_char(int c);

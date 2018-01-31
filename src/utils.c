@@ -23,11 +23,13 @@ void skip(FILE* fp) {
   ungetc(c, fp);
 }
 
-void warn(char const* fmt, ...) {
+void _warn_impl(int line, char const* fmt, ...) {
   va_list args;
   va_start(args, fmt);
+  fprintf(stderr, "%d: ", line);
   vfprintf(stderr, fmt, args);
   va_end(args);
+  fflush(stderr);
 }
 
 #ifndef NDEBUG
