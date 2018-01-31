@@ -23,10 +23,10 @@ void skip(FILE* fp) {
   ungetc(c, fp);
 }
 
-void _warn_impl(int line, char const* fmt, ...) {
+void _warn_impl(char const* file, int line, char const* func, char const* fmt, ...) {
   va_list args;
   va_start(args, fmt);
-  fprintf(stderr, "%d: ", line);
+  fprintf(stderr, "%s:%d %s: ", file, line, func);
   vfprintf(stderr, fmt, args);
   va_end(args);
   fflush(stderr);
