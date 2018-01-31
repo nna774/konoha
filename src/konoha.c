@@ -150,10 +150,16 @@ void emit(Ast const* ast, Env const* env) {
 }
 
 int main(int argc, char** argv) {
+  INTRUSIVE_LIST_OF(Token) ts = tokenize(stdin);
+  if(argc > 1 && !strcmp(argv[1], "-t")) {
+    printf("col: %d\n", list_of_Token_length(ts));
+    print_Tokens(ts);
+    return 0;
+  }
   Env* const env = new_Env();
-  Type* int_ = new_Type("int");
+  Type* int_ = new_Type("int"); //
   list_of_Type_append(env->types, int_);
-  Ast* const ast = make_ast(env);
+  Ast* const ast = make_ast(env, ts);
   if (argc > 1 && !strcmp(argv[1], "-a")) {
     print_ast(ast);
   } else if (argc > 1 && !strcmp(argv[1], "-d")) {
