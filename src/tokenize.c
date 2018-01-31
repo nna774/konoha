@@ -59,7 +59,7 @@ Token* read_close_paren(FILE* fp) {
 }
 
 Token* read_token(FILE* fp) {
-  int c = peek(fp);
+  int const c = peek(fp);
   Token* t = NULL;
   if(is_identifier_char(c)) {
     t = read_identifier(fp);
@@ -77,7 +77,6 @@ Token* read_token(FILE* fp) {
     t = new_Token(from_char(';'), SEMICOLON_T);
   } else {
     printf("got %s", show_char(c));
-    puts("here");
   }
   assert(t != NULL);
   return t;
