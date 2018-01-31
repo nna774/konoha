@@ -19,7 +19,7 @@ $(TARGET): $(OBJS)
 %.o: %.c
 	$(CC) $(CFLAGS) -c -MMD -MP $<
 
-debug: CFLAGS += -DDEBUG -I$(DEBUG_DIR) -L$(DEBUG_DIR) -ldebug
+debug: CFLAGS += -DDEBUG -g -I$(DEBUG_DIR) -L$(DEBUG_DIR) -ldebug
 debug: clean
 	$(CC) $(SRCS) $(CFLAGS) -o $(TARGET)
 
