@@ -2,6 +2,7 @@
 /src/konoha
 /tmp
 /memwatch.log
+/core
 
 # Prerequisites
 *.d
