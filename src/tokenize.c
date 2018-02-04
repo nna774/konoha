@@ -24,6 +24,14 @@ Token* new_Token(String str, TokenType ty) {
   return t;
 }
 
+Token* copy_Token(Token _t) {
+  Token* t = malloc(sizeof(Token));
+  t->string = _t.string;
+  t->type = _t.type;
+  init_Token_hook(t);
+  return t;
+}
+
 Token* read_identifier(FILE* fp) {
   int c;
   String str = new_String();
@@ -102,7 +110,7 @@ Token pop_Token(Tokens ts) {
 }
 
 void push_Token(Tokens ts, Token t) {
-  list_of_Token_push(ts, &t);
+  list_of_Token_push(ts, copy_Token(t));
 }
 
 Token peek_Token(Tokens ts) {
