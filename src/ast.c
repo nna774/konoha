@@ -690,6 +690,7 @@ void print_ast(Ast const* ast) {
   default:
     warn("never come!!!(type: %s)\n", show_AstType(t));
   }
+  fflush(stdout);
 }
 
 void print_env(Env const* env) {
