@@ -170,5 +170,10 @@ int main(int argc, char** argv) {
   } else {
     emit(ast, env);
   }
+
+  if(list_of_Token_length(ts) != 1) {
+    warn("token remains! possible parser bug. rest tokens are here:\n");
+    print_Tokens(ts);
+  }
   return 0;
 }
