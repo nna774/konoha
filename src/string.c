@@ -25,6 +25,7 @@ String new_String() {
 }
 
 String to_String(size_t size, char* s) {
+  assert(s != NULL);
   String str = {};
   str._si = new_si();
   str._si->length = size;
@@ -76,6 +77,7 @@ char const* c_str(String const s) {
 }
 
 char head_char(String const s) {
+  assert(s._si != NULL);
   assert(s._si->top != NULL);
   return s._si->top[0];
 }
