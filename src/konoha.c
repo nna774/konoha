@@ -62,6 +62,19 @@ void emit_ast_impl(Ast const* ast, Env const* env, int depth, char const* to) {
     }
     break;
   }
+  case AST_OP_DIV:
+  {
+    int const offset = depth * 4;
+    emit_ast_impl(ast->bi_op.rhs, env, depth + 1, NULL);
+    printf("\tmov %%eax, -%d(%%rbp)\n", offset);
+    emit_ast_impl(ast->bi_op.lhs, env, depth + 2, NULL);
+    printf("\tcltd\n");
+    printf("\tidivl -%d(%%rbp)\n", offset);
+    if(strcmp(to, "%eax")) {
+      printf("\tmov %%eax, %s\n", to);
+    }
+    break;
+  }
   case AST_OP_ASSIGN:
   {
     char reg[MAX_REG_LEN];

@@ -122,6 +122,8 @@ char const * op_from_type(AstType t) {
     return "sub";
   case AST_OP_MULTI:
     return "imul";
+  case AST_OP_DIV:
+    return "idivl";
   default:
     warn("wrong type(%d)\n", t);
     return ";";
@@ -381,6 +383,7 @@ int priority(char op) {
   case '-':
     return 1;
   case '*':
+  case '/':
     return 2;
   default:
     warn("unknown bi-op(got: %c)\n", op);
@@ -396,6 +399,8 @@ AstType detect_bi_op(char c) {
     return AST_OP_MINUS;
   case '*':
     return AST_OP_MULTI;
+  case '/':
+    return AST_OP_DIV;
   default:
     warn("unknown bi-op(got: %c)\n", c);
     return AST_UNKNOWN;
@@ -416,6 +421,7 @@ Ast* parse_expr(Env* env, Tokens ts, int prio) {
     case '+':
     case '-':
     case '*':
+    case '/':
     {
       int const c_prio = priority(c);
       if(c_prio < prio) {
@@ -606,6 +612,7 @@ void print_ast(Ast const* ast) {
   case AST_OP_PLUS:
   case AST_OP_MINUS:
   case AST_OP_MULTI:
+  case AST_OP_DIV:
     printf("(%s ", op_from_type(t));
     print_ast(ast->bi_op.lhs);
     printf(" ");

@@ -81,6 +81,8 @@ test_ast "(defun f<int()> () (do (imul 0 0)))" "int f() {0*0;}"
 test_ast "(defun f<int()> () (do (imul 1 2)))" "int f() {1*2;}"
 test_ast "(defun f<int()> () (do (imul 33 3)))" "int f() {33*3;}"
 
+test_ast "(defun f<int()> () (do (idivl 33 3)))" "int f() {33/3;}"
+
 test_ast "(defun f<int()> () (do (add (add 1 2) 3)))" "int f() {1+2+3;}"
 test_ast "(defun f<int()> () (do (imul (imul 2 3) 4)))" "int f() {2*3*4;}"
 
@@ -146,6 +148,10 @@ test "2" "int main() {print_int(1*2);}"
 test "99" "int main() {print_int(33*3);}"
 test "6" "int main() {print_int(1+2+3);}"
 test "24" "int main() {print_int(2*3*4);}"
+
+test "0" "int main() {print_int(0/1);}"
+test "3" "int main() {print_int(10/3);}"
+test "11" "int main() {print_int(33/3);}"
 
 test "7" "int main() {print_int(1+2*3);}"
 test "17" "int main() {print_int(3*4+5);}"
