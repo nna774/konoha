@@ -16,6 +16,17 @@ bool is_close_paren(char c) {
   return c == ')' ||  c == '}';
 }
 
+bool is_operator_char(char c) {
+  char const operators[] = "+-*/=";
+  int const coo = sizeof(operators) - 1;
+  for(int i = 0; i < coo; ++i) {
+    if(c == operators[i]) {
+      return true;
+    }
+  }
+  return false;
+}
+
 Token* new_Token(String str, TokenType ty) {
   Token* t = malloc(sizeof(Token));
   t->string = str;
@@ -66,17 +77,24 @@ Token* read_close_paren(FILE* fp) {
   return read_paren_impl(fp, false);
 }
 
+Token* read_operator(FILE* fp) {
+  int c = getc(fp);
+  return new_Token(from_char(c), OP_T);
+}
+
 Token* read_token(FILE* fp) {
   int const c = peek(fp);
   Token* t = NULL;
-  if(is_identifier_char(c)) {
-    t = read_identifier(fp);
-  } else if(isdigit(c)){
+  if(isdigit(c)) {
     t = read_integer(fp);
+  } else if(is_identifier_char(c)){
+    t = read_identifier(fp);
   } else if(is_open_paren(c)) {
     t = read_open_paren(fp);
   } else if(is_close_paren(c)) {
     t = read_close_paren(fp);
+  } else if(is_operator_char(c)) {
+    t = read_operator(fp);
   } else if(c == ',') {
     getc(fp);
     t = new_Token(from_char(','), COMMA_T);

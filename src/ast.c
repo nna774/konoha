@@ -8,9 +8,11 @@
 #include "utils.h"
 
 Ast* to_ast(AstType t, void*);
-Ast* parse_expr(FILE* fp, Env* env, int prio);
-Ast* parse_funcall(FILE* fp, Env* env, char const* name);
-Ast* parse_block(FILE* fp, Env* env);
+Type* read_type(Env* env, Tokens ts);
+char const* read_symbol(Tokens ts);
+Ast* parse_expr(Env* env, Tokens ts, int prio);
+Ast* parse_funcall(Env* env, Tokens ts, char const* name);
+Ast* parse_block(Env* env, Tokens ts);
 char const* show_AstType(AstType);
 int const MAX_ARGC = 6;
 
@@ -253,58 +255,45 @@ Ast* make_ast_val_define(Env* env, Type* t, char const* sym_name) {
   return to_ast(AST_SYM_DEFINE, v);
 }
 
-Ast* parse_int(FILE* fp, int sign) {
+Ast* parse_int(Token t, int sign) {
+  assert(t.type == INTEGER_LITERAL_T);
+  String const s = t.string;
   int sum = 0;
-  int c;
-  while(c = getc(fp), isdigit(c)) {
-    sum  = sum * 10 + (c - '0');
+  int max = String_length(s);
+  char const* ss = c_str(s);
+  for(int i = 0; i < max; ++i) {
+    sum  = sum * 10 + (ss[i] - '0');
   }
-  ungetc(c, fp);
   return make_ast_int(sum * sign);
 }
 
-char const* read_symbol(FILE* fp) {
-  char* const buf = malloc(MAX_BUF_LEN); // todo: expand buf when needed
-  int c;
-  int at = 0;
-  while(c = getc(fp), isalnum(c) || c == '_') {
-    if (at >= MAX_BUF_LEN - 1) {
-      warn("symbol too long! giving up!\n");
-      return NULL;
-    }
-    buf[at++] = c;
-  }
-  ungetc(c, fp);
-  buf[at] = '\0';
-  return buf;
-}
-
-Ast* parse_symbol_or_funcall(FILE* fp, Env* env) {
-  char const* name = read_symbol(fp);
-  Type* t;
-  if(t = find_type_by_name(env, name), t != NULL) {
-    skip(fp);
-    char const* sym_name = read_symbol(fp);
-    skip(fp);
-    int const c = peek(fp);
-    if(c == ';') {
+Ast* parse_symbol_or_funcall(Env* env, Tokens ts) {
+  char const* name = read_symbol(ts);
+  Type* const t = find_type_by_name(env, name);
+  if(t != NULL) {
+    // type
+    char const* sym_name = read_symbol(ts);
+    Token const token = peek_Token(ts);
+    char const c = head_char(token.string);
+    if(token.type == SEMICOLON_T) {
       // sym define
       return make_ast_val_define(env, t, sym_name);
     }
     if(c == '=') {
-      // sym define with inti val
+      // sym define with init val
       return NULL;
     }
-    warn("unexpected char(%c)\n", c);
+    warn("unexpected token(%s)\n", c_str(token.string));
     return NULL;
   }
-  skip(fp);
-  int const c = peek(fp);
-  if(c == '(') {
-    getc(fp);
-    return parse_funcall(fp, env, name);
+  Token const token = peek_Token(ts);
+  char const c = head_char(token.string);
+  if(token.type == OPEN_PAREN_T && c == '(') {
+    // funcall
+    return parse_funcall(env, ts, name);
   }
 
+  // var
   Var* const v = find_var_by_name(env, name);
   if(v != NULL) {
     return make_ast_symbol_ref(env, v);
@@ -313,32 +302,36 @@ Ast* parse_symbol_or_funcall(FILE* fp, Env* env) {
   return NULL;
 }
 
-Ast* parse_prim(FILE* fp, Env* env) {
-  int const c = peek(fp);
-  if(isdigit(c)) {
+Ast* parse_prim(Env* env, Tokens ts) {
+  Token const t = peek_Token(ts);
+  char const c = head_char(t.string);
+  if(t.type == INTEGER_LITERAL_T) {
+    pop_Token(ts);
     int const sign = 1;
-    return parse_int(fp, sign);
-  } else if(isalpha(c)) {
-    return parse_symbol_or_funcall(fp, env);
-  } else if(c == '(') {
-    getc(fp);
+    return parse_int(t, sign);
+  } else if(t.type == IDENTIFIER_T) {
+    return parse_symbol_or_funcall(env, ts);
+  } else if(t.type == OPEN_PAREN_T && c == '(') {
+    pop_Token(ts);
     int const prio = 0;
-    Ast* const ast = parse_expr(fp, env, prio);
-    int const c = getc(fp);
-    if(c != ')') {
-      if(c == EOF) { warn("unterminated expr(got unexpeced EOF)\n"); }
-      else { warn("unterminated expr(got %c)\n", c); }
+    Ast* const ast = parse_expr(env, ts, prio);
+    Token const t2 = pop_Token(ts);
+    char const c2 = head_char(t2.string);
+    if(t2.type != CLOSE_PAREN_T || c2 != ')') {
+      if(t2.type == EOF_T) { warn("unterminated expr(got unexpeced EOF)\n"); }
+      else { warn("unterminated token(got %s)\n", c_str(t2.string)); }
       return NULL;
     }
     return ast;
   } else if(c == '+' || c == '-') {
-    getc(fp);
-    int const c2 = peek(fp);
-    if(isdigit(c2)) {
-      return parse_int(fp, c == '+' ? 1 : -1);
+    pop_Token(ts);
+    Token const t2 = peek_Token(ts);
+    if(t2.type == INTEGER_LITERAL_T) {
+      pop_Token(ts);
+      return parse_int(t2, c == '+' ? 1 : -1);
     }
     int const prio = 0;
-    Ast* const subseq = parse_expr(fp, env, prio);
+    Ast* const subseq = parse_expr(env, ts, prio);
     if(c == '+') {
       return subseq;
     }
@@ -346,32 +339,34 @@ Ast* parse_prim(FILE* fp, Env* env) {
     Ast* const neg = make_ast_int(-1);
     return make_ast_bi_op(AST_OP_MULTI, neg, subseq);
   } else {
-    if(c == EOF) { warn("unexpected EOF\n"); }
-    else { warn("unknown char: %c\n", c); }
+    if(t.type == EOF_T) { warn("unexpected EOF\n"); }
+    else { warn("unknown token: %s\n", c_str(t.string)); }
     return NULL;
   }
 }
 
-Ast* parse_funcall(FILE* fp, Env* env, char const* name) {
+Ast* parse_funcall(Env* env, Tokens ts, char const* name) {
   Ast** const args = new_Ast_array(MAX_ARGC);
+  Token t = pop_Token(ts);
+  if(t.type != OPEN_PAREN_T || head_char(t.string) != '(') {
+    warn("###");
+  }
   int argc = 0;
   for(; argc <= MAX_ARGC; ++argc) {
-    skip(fp);
-    int const c = peek(fp);
-    if(c == ')') {
-      getc(fp);
+    t = peek_Token(ts);
+    if(t.type == CLOSE_PAREN_T && head_char(t.string) == ')') {
+      pop_Token(ts);
       break;
     }
     if(argc == 0) { continue; }
-    if(c == EOF) { warn("unexpected EOF\n"); return NULL; }
+    if(t.type == EOF_T) { warn("unexpected EOF\n"); return NULL; }
     int const prio = 0;
-    args[argc - 1] = parse_expr(fp, env, prio);
-    skip(fp);
-    int const c2 = getc(fp);
-    if(c2 == EOF) { warn("unexpected EOF\n"); return NULL; }
-    if(c2 == ')') { break; }
-    if(c2 == ',') { /* nop */ }
-    else { warn("unexpected char(%c)\n", c2); return NULL; }
+    args[argc - 1] = parse_expr(env, ts, prio);
+    t = pop_Token(ts);
+    if(t.type == EOF_T) { warn("unexpected EOF\n"); return NULL; }
+    if(head_char(t.string) == ')') { break; }
+    if(head_char(t.string) == ',') { /* nop */ }
+    else { warn("unexpected token(%s)\n", c_str(t.string)); return NULL; }
   }
   if(argc > MAX_ARGC) {
     warn("too many arg(max argc is %d)\n", MAX_ARGC);
@@ -388,7 +383,7 @@ int priority(char op) {
   case '*':
     return 2;
   default:
-    warn("unknown bi-op(got: %c)", op);
+    warn("unknown bi-op(got: %c)\n", op);
     return -1;
   }
 }
@@ -402,6 +397,7 @@ AstType detect_bi_op(char c) {
   case '*':
     return AST_OP_MULTI;
   default:
+    warn("unknown bi-op(got: %c)\n", c);
     return AST_UNKNOWN;
   }
 }
@@ -410,12 +406,12 @@ bool compare_with_name(Var* lhs, Var* rhs) {
   return !strcmp(lhs->name, rhs->name);
 }
 
-Ast* parse_expr(FILE* fp, Env* env, int prio) {
-  Ast* ast = parse_prim(fp, env);
+Ast* parse_expr(Env* env, Tokens ts, int prio) {
+  Ast* ast = parse_prim(env, ts);
   assert(ast != NULL);
   while(true) {
-    skip(fp);
-    int const c = getc(fp);
+    Token const t = pop_Token(ts);
+    char const c = head_char(t.string);
     switch(c) {
     case '+':
     case '-':
@@ -423,21 +419,19 @@ Ast* parse_expr(FILE* fp, Env* env, int prio) {
     {
       int const c_prio = priority(c);
       if(c_prio < prio) {
-        ungetc(c, fp);
+        push_Token(ts, t);
         return ast;
       }
-      AstType const t = detect_bi_op(c);
-      skip(fp);
+      AstType const type = detect_bi_op(c);
       Ast* const lhs = ast;
-      Ast* const rhs = parse_expr(fp, env, c_prio + 1);
-      ast = make_ast_bi_op(t, lhs, rhs);
+      Ast* const rhs = parse_expr(env, ts, c_prio + 1);
+      ast = make_ast_bi_op(type, lhs, rhs);
       break;
     }
     case '=':
     {
-      skip(fp);
       Ast* const lhs = ast;
-      Ast* const rhs = parse_expr(fp, env, prio);
+      Ast* const rhs = parse_expr(env, ts, prio);
       assert(lhs->type == AST_SYM);
       lhs->var->initialized = true;
       ast = make_ast_bi_op(AST_OP_ASSIGN, lhs, rhs);
@@ -448,14 +442,11 @@ Ast* parse_expr(FILE* fp, Env* env, int prio) {
     case ',':
     case '}':
     {
-      ungetc(c, fp);
+      push_Token(ts, t);
       return ast;
     }
-    case EOF:
-      warn("unexpected EOF\n");
-      return ast;
     default:
-      warn("never come!!!(got: %c)\n", c);
+      warn("never come!!!(got: %s)(token type: %s)\n", show_char(c), show_TokenType(t.type));
       return NULL;
     }
   }
@@ -463,107 +454,122 @@ Ast* parse_expr(FILE* fp, Env* env, int prio) {
   return NULL; // never come
 }
 
-Statement* parse_statement(FILE* fp, Env* env) {
+Statement* parse_statement(Env* env, Tokens ts) {
   {
-    int const c = peek(fp);
-    if(c == ';') { // empty statement
-      getc(fp);
+    Token t = peek_Token(ts);
+    if(t.type == SEMICOLON_T) { // empty statement
+      pop_Token(ts);
       Ast* const ast = new_Ast();
       ast->type = AST_EMPTY;
       return make_statement(ast);
-    } else if(c == '{') {
-      return make_statement(parse_block(fp, env));
+    } else if(t.type == OPEN_PAREN_T && head_char(t.string) == '{') {
+      return make_statement(parse_block(env, ts));
     }
   }
   int const prio = 0;
-  Ast* const ast = parse_expr(fp, env, prio);
+  Ast* const ast = parse_expr(env, ts, prio);
   assert(ast != NULL);
-  skip(fp);
 
-  int const c = getc(fp);
-  if(c != ';') {
-    if(c == EOF) { warn("unterminated expr(got unexpeced EOF)\n"); }
-    else { warn("unterminated expr(got %c)\n", c); }
+  Token t = pop_Token(ts);
+  if(t.type != SEMICOLON_T) {
+    if(t.type == EOF_T) { warn("unterminated expr(got unexpeced EOF)\n"); }
+    else {
+      warn("unterminated expr(got %s)\n", c_str(t.string));
+    }
     return NULL;
   }
 
   return make_statement(ast);
 }
 
-Ast* parse_statements(FILE* fp, Env* env) {
+Ast* parse_statements(Env* env, Tokens ts) {
   INTRUSIVE_LIST_OF(Statement) ss = new_list_of_Statement();
-  int c;
-  while(c = peek(fp), c != EOF) {
-    if(c == '}') {
+  Token t;
+  while(t = peek_Token(ts), t.type != EOF_T) {
+    char const c = head_char(t.string);
+    if(t.type == CLOSE_PAREN_T && c == '}') {
       // end of block
       break;
     }
-    skip(fp);
-    Statement* s = parse_statement(fp, env);
-    skip(fp);
+    Statement* s = parse_statement(env, ts);
     assert(s != NULL);
     list_of_Statement_append(ss, s);
   }
   return make_ast_statements(ss);
 }
 
-Ast* parse_block(FILE* fp, Env* env) {
-  skip(fp);
-  int c = getc(fp);
+Ast* parse_block(Env* env, Tokens ts) {
+  Token t = pop_Token(ts);
   Env* expanded = expand_Env(env);
-  if(c != '{') { warn("unexpected char(%c)\n", c); return NULL; }
-  Ast* const ss = parse_statements(fp, expanded);
-  c = getc(fp);
-  if(c != '}') { warn("unexpected char(%c)\n", c); return NULL; }
+  char c = head_char(t.string);
+  if(t.type != OPEN_PAREN_T || c != '{') {
+    warn("unexpected token(%s)\n", c_str(t.string));
+    return NULL;
+  }
+  Ast* const ss = parse_statements(expanded, ts);
+  t = pop_Token(ts);
+  c = head_char(t.string);
+  if(t.type != CLOSE_PAREN_T || c != '}') {
+    warn("unexpected token(%s)\n", c_str(t.string));
+    return NULL;
+  }
   assert(ss->type == AST_STATEMENTS);
   assert(ss->statements != NULL);
   return make_ast_block(expanded, ss);
 }
 
-Type* read_type(FILE* fp, Env* env) {
-  char const* const name = read_symbol(fp);
-  Type* const type = find_type_by_name(env, name);
+Type* read_type(Env* env, Tokens ts) {
+  Token const name = pop_Token(ts);
+  assert(name.type == IDENTIFIER_T);
+  Type* const type = find_type_by_name(env, c_str(name.string));
   assert(type != NULL);
   return type;
 }
 
-Ast* parse_fundef(FILE* fp, Env* env) {
-  skip(fp);
-  Type* const ret_type = read_type(fp, env);
-  skip(fp);
-  char const* const name = read_symbol(fp);
-  skip(fp);
-  int const open = getc(fp);
-  if(open != '(') { warn("unexpected char(%c)\n", open); return NULL; }
+char const* read_symbol(Tokens ts) {
+  Token const t = pop_Token(ts);
+  assert(t.type == IDENTIFIER_T);
+  return c_str(t.string);
+}
+
+Ast* parse_fundef(Env* env, Tokens ts) {
+  Type* const ret_type = read_type(env, ts);
+  char const* const name = read_symbol(ts);
+  Token open = pop_Token(ts);
+  char const o = head_char(open.string);
+  if(open.type != OPEN_PAREN_T
+     || o != '(') {
+    warn("unexpected char(%c)\n", o);
+    return NULL;
+  }
   Env* const expanded = expand_Env(env);
   Type** arg_types = malloc(sizeof(Type*) * MAX_ARGC);
   Var** args = malloc(sizeof(Var*) * MAX_ARGC);
   int argc = 0;
   for(; argc <= MAX_ARGC + 1; ++argc) {
-    skip(fp);
-    int const c0 = peek(fp);
-    if(c0 == ')') {
-      getc(fp);
+    Token const t = peek_Token(ts);
+    char const c = head_char(t.string);
+    if(t.type == CLOSE_PAREN_T && c == ')') {
+      pop_Token(ts);
       break;
     }
     if(argc == 0) { continue; }
-    skip(fp);
-    Type* const type = read_type(fp, env);
+    Type* const type = read_type(env, ts);
     arg_types[argc - 1] = type;
-    skip(fp);
-    char const* const name = read_symbol(fp);
+    char const* const name = read_symbol(ts);
     args[argc - 1] = add_sym_to_env(expanded, type, name);
-    int const c = peek(fp);
-    if(c == ',') {
-      getc(fp);
+    Token const t2 = peek_Token(ts);
+    char const c2 = head_char(t2.string);
+    if(t2.type == COMMA_T) {
+      pop_Token(ts);
     }
-    if(c == ')') {
-      getc(fp);
+    if(t2.type == CLOSE_PAREN_T && c2 == ')') {
+      pop_Token(ts);
       break;
     }
   }
 
-  Ast* const body = parse_block(fp, expanded);
+  Ast* const body = parse_block(expanded, ts);
   FunType t = {
     ret_type,
     argc,
@@ -576,13 +582,17 @@ Ast* parse_fundef(FILE* fp, Env* env) {
   return ast;
 }
 
-Ast* parse(FILE* fp, Env* env) {
-  Ast* const ast = parse_fundef(fp, env);
+Ast* parse(Env* env, Tokens ts) {
+  Ast* const ast = parse_fundef(env, ts);
   return ast;
 }
 
-Ast* make_ast(Env* env) {
-  Ast* const ast = parse(stdin, env);
+Ast* make_ast(Env* env, Tokens ts) {
+  Ast* const ast = parse(env, ts);
+  if(list_of_Token_length(ts) != 1) {
+    warn("token remains! possible parser bug. rest tokens are here:\n");
+    print_Tokens(ts);
+  }
   return ast;
 }
 

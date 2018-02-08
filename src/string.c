@@ -57,14 +57,14 @@ void append_char(String s, char c) {
   }
   s._si->capacity *= 2;
   char* newbuf = realloc(s._si->top, s._si->capacity);
-  if(newbuf != NULL) {
-    s._si->top = newbuf;
-    s._si->top[s._si->length] = c;
-    ++s._si->length;
-    s._si->top[s._si->length] = '\0';
+  if(newbuf == NULL) {
+    warn("append char: realloc failed(maybe unrecoverable)");
     return;
   }
-  warn("append char: realloc failed(maybe unrecoverable)");
+  s._si->top = newbuf;
+  s._si->top[s._si->length] = c;
+  ++s._si->length;
+  s._si->top[s._si->length] = '\0';
   return;
 }
 
