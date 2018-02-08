@@ -27,6 +27,50 @@ bool is_operator_char(char c) {
   return false;
 }
 
+bool is_keyword(String str_) {
+  char const* const str = c_str(str_);
+  char const* const keywords[] = {
+    "auto",
+    "break",
+    "case",
+    "char",
+    "const",
+    "continue",
+    "default",
+    "do",
+    "double",
+    "else",
+    "enum",
+    "extern",
+    "float",
+    "for",
+    "goto",
+    "if",
+    "int",
+    "long",
+    "register",
+    "return",
+    "short",
+    "signed",
+    "sizeof",
+    "static",
+    "struct",
+    "switch",
+    "typedef",
+    "union",
+    "unsigned",
+    "void",
+    "volatile",
+    "while",
+  };
+  for(int i = 0; i < (int)(sizeof(keywords) / sizeof(*keywords)); ++i) {
+    if(strcmp(str, keywords[i])) {
+      return true;
+    }
+  }
+  return false;
+}
+
 Token* new_Token(String str, TokenType ty) {
   Token* t = malloc(sizeof(Token));
   t->string = str;
@@ -48,6 +92,9 @@ Token* read_identifier(FILE* fp) {
   String str = new_String();
   while(c = getc(fp), is_identifier_char(c)) {
     append_char(str, c);
+  }
+  if(is_keyword(str)) {
+    return new_Token(str, KEYWORD_T);
   }
   ungetc(c, fp);
   return new_Token(str, IDENTIFIER_T);
