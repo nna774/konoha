@@ -16,6 +16,7 @@ ENUM_WITH_SHOW(
   COMMA_T,
   EOF_T,
 
+  COMMENT_T,
   UNKNOWN_T,
 )
 

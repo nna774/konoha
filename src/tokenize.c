@@ -77,8 +77,27 @@ Token* read_close_paren(FILE* fp) {
   return read_paren_impl(fp, false);
 }
 
-Token* read_operator(FILE* fp) {
-  int c = getc(fp);
+Token* read_operator_and_comment(FILE* fp) {
+  int const c = getc(fp);
+  if(c == '/') {
+    int const next = peek(fp);
+    if(next == '/') {
+      //
+      int c;
+      while(c = getc(fp), c != '\n');
+      return new_Token(from_char('/'), COMMENT_T);
+    } else if(next == '*') {
+      /* */
+      int c;
+      while(true) {
+        while(c = getc(fp), c != '*');
+        if(c = getc(fp), c == '/') {
+          break;
+        }
+      }
+      return new_Token(from_char('*'), COMMENT_T);
+    }
+  }
   return new_Token(from_char(c), OP_T);
 }
 
@@ -94,7 +113,7 @@ Token* read_token(FILE* fp) {
   } else if(is_close_paren(c)) {
     t = read_close_paren(fp);
   } else if(is_operator_char(c)) {
-    t = read_operator(fp);
+    t = read_operator_and_comment(fp);
   } else if(c == ',') {
     getc(fp);
     t = new_Token(from_char(','), COMMA_T);
@@ -115,7 +134,9 @@ INTRUSIVE_LIST_OF(Token) tokenize(FILE* fp) {
   while(c = peek(fp), c != EOF) {
     Token* t = read_token(fp);
     assert(t != NULL);
-    list_of_Token_append(tokens, t);
+    if(t->type != COMMENT_T) {
+      list_of_Token_append(tokens, t);
+    }
     skip(fp);
   }
   Token* eof_t = new_Token(new_String(), EOF_T);

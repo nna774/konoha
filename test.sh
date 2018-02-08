@@ -123,6 +123,19 @@ test_ast "(defun f<int()> () (do (defvar a)(let a 42)(eval a)))" "int f() {int a
 
 test_ast "(defun f<int()> () (do (do (defvar a))(do (defvar a))))" "int f() {{int a;}{int a;}}"
 
+test_ast "(defun f<int()> () (do (defvar a)))" "int f() {
+// int abc;
+int a;
+}"
+test_ast "(defun f<int()> () (do (defvar a)))" "int f() {
+/* int abc; */
+int a;
+}"
+test_ast "(defun f<int()> () (do (defvar a)))" "int f() {
+/* int* abc; 1 / 2 * 3 + 4 */
+int a;
+}"
+
 test "0" "int main() {print_int(0);}"
 test "42" "int main() {print_int(42);}"
 test "100" "int main() {print_int(100);}"
