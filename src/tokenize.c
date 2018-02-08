@@ -102,7 +102,7 @@ Token* read_token(FILE* fp) {
     getc(fp);
     t = new_Token(from_char(';'), SEMICOLON_T);
   } else {
-    printf("got %s", show_char(c));
+    printf("got %s\n", show_char(c));
   }
   assert(t != NULL);
   return t;
