@@ -23,7 +23,7 @@ void restore_regs(int argc, int depth) {
 }
 
 void emit_int_to(Ast const* ast, char const* reg) {
-  printf("\tmovl $%d, %s\t\n", ast->int_val, reg);
+  printf("\tmovl $%d, %s\n", ast->int_val, reg);
 }
 
 void emit_ast_impl(Ast const* ast, Env const* env, int depth, char const* to) {
