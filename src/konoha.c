@@ -189,8 +189,21 @@ int main(int argc, char** argv) {
       break;
     }
   }
+  FILE* file;
+  if(optind < argc) {
+    // src file
+    if(argc - optind > 2) {
+      warn("now, only one src file acceptable\n");
+    }
+    file = fopen(argv[optind], "r");
+    assert(file != NULL);
+  } else {
+    // read from stdin
+    file = stdin;
+  }
 
-  INTRUSIVE_LIST_OF(Token) ts = tokenize(stdin);
+  INTRUSIVE_LIST_OF(Token) ts = tokenize(file);
+  fclose(file);
   if(mode == TOKENIZE) {
     printf("col: %d\n", list_of_Token_length(ts));
     print_Tokens(ts);
