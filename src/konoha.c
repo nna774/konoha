@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include <unistd.h>
 #include "ast.h"
 #include "tokenize.h"
 #include "utils.h"
@@ -162,20 +163,47 @@ void emit(Ast const* ast, Env const* env) {
   emit_func(ast, env);
 }
 
+enum Mode {
+  TOKENIZE,
+  AST,
+  DUMP,
+  EMIT,
+};
+
 int main(int argc, char** argv) {
+  int opt;
+  enum Mode mode = EMIT;
+  while ((opt = getopt(argc, argv, "tad")) != -1) {
+    switch (opt) {
+    case 't':
+      mode = TOKENIZE;
+      break;
+    case 'a':
+      mode = AST;
+      break;
+    case 'd':
+      mode = DUMP;
+      break;
+    default: /* '?' */
+      printf("Usage: %s\n", argv[0]);
+      break;
+    }
+  }
+
   INTRUSIVE_LIST_OF(Token) ts = tokenize(stdin);
-  if(argc > 1 && !strcmp(argv[1], "-t")) {
+  if(mode == TOKENIZE) {
     printf("col: %d\n", list_of_Token_length(ts));
     print_Tokens(ts);
     return 0;
   }
+
   Env* const env = new_Env();
   Type* int_ = new_Type("int"); //
   list_of_Type_append(env->types, int_);
   Ast* const ast = make_ast(env, ts);
-  if (argc > 1 && !strcmp(argv[1], "-a")) {
+  if (mode == AST) {
     print_ast(ast);
-  } else if (argc > 1 && !strcmp(argv[1], "-d")) {
+  } else if (mode == DUMP) {
     printf("ast:\n");
     print_ast(ast);
     printf("\nenv:\n");
