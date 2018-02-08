@@ -63,8 +63,6 @@ test_ast "(defun f<int()> () (do 100))" "int f() {100;}"
 
 test_ast "(defun f<int()> () (do 0))" "    int     f(         )   {    0     ;}"
 
-# test_ast "0;1" "{0;1;}" admitted
-
 test_ast "(defun f<int()> () (do (add 0 0)))" "int f() {0+0;}"
 test_ast "(defun f<int()> () (do (add 1 2)))" "int f() {1+2;}"
 test_ast "(defun f<int()> () (do (add 100 200)))" "int f() {100 +     200;}"
