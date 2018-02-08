@@ -10,30 +10,30 @@ char const* const REGS[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 int const MAX_REG_LEN = 16;
 int const MAX_OP_LEN = 16;
 
-void save_regs(int argc, int depth) {
+void save_regs(FILE* outfile, int argc, int depth) {
   for(int i = 0; i < argc; ++i) {
     int const offset = (depth + i) * 4;
-    printf("\tmov %%%s, -%d(%%rbp)\n", REGS[i], offset);
+    fprintf(outfile, "\tmov %%%s, -%d(%%rbp)\n", REGS[i], offset);
   }
 }
-void restore_regs(int argc, int depth) {
+void restore_regs(FILE* outfile, int argc, int depth) {
   for(int i = 0; i < argc; ++i) {
     int const offset = (depth + i) * 4;
-    printf("\tmov -%d(%%rbp), %%%s\n", offset, REGS[i]);
+    fprintf(outfile, "\tmov -%d(%%rbp), %%%s\n", offset, REGS[i]);
   }
 }
 
-void emit_int_to(Ast const* ast, char const* reg) {
-  printf("\tmovl $%d, %s\n", ast->int_val, reg);
+void emit_int_to(FILE* outfile, Ast const* ast, char const* reg) {
+  fprintf(outfile, "\tmovl $%d, %s\n", ast->int_val, reg);
 }
 
-void emit_ast_impl(Ast const* ast, Env const* env, int depth, char const* to) {
+void emit_ast_impl(FILE* outfile, Ast const* ast, Env const* env, int depth, char const* to) {
   if(to == NULL) { to = "%eax"; }
   AstType const t = ast->type;
-  printf("# begin of %s\n", show_AstType(t));
+  fprintf(outfile, "# begin of %s\n", show_AstType(t));
   switch(t) {
   case AST_INT:
-    emit_int_to(ast, to);
+    emit_int_to(outfile, ast, to);
     break;
   case AST_OP_PLUS:
   case AST_OP_MULTI:
@@ -42,37 +42,37 @@ void emit_ast_impl(Ast const* ast, Env const* env, int depth, char const* to) {
     char op_with_suffix[MAX_OP_LEN];
     snprintf(op_with_suffix, MAX_OP_LEN, "%sl", op);
     int const offset = depth * 4;
-    emit_ast_impl(ast->bi_op.lhs, env, depth + 1, NULL);
-    printf("\tmov %%eax, -%d(%%rbp)\n", offset);
-    emit_ast_impl(ast->bi_op.rhs, env, depth + 2, NULL);
-    printf("\t%s -%d(%%rbp), %%eax\n", op_with_suffix, offset);
+    emit_ast_impl(outfile, ast->bi_op.lhs, env, depth + 1, NULL);
+    fprintf(outfile, "\tmov %%eax, -%d(%%rbp)\n", offset);
+    emit_ast_impl(outfile, ast->bi_op.rhs, env, depth + 2, NULL);
+    fprintf(outfile, "\t%s -%d(%%rbp), %%eax\n", op_with_suffix, offset);
     if(strcmp(to, "%eax")) {
-      printf("\tmov %%eax, %s\n", to);
+      fprintf(outfile, "\tmov %%eax, %s\n", to);
     }
     break;
   }
   case AST_OP_MINUS:
   {
     int const offset = depth * 4;
-    emit_ast_impl(ast->bi_op.rhs, env, depth + 1, NULL);
-    printf("\tmov %%eax, -%d(%%rbp)\n", offset);
-    emit_ast_impl(ast->bi_op.lhs, env, depth + 2, NULL);
-    printf("\tsub -%d(%%rbp), %%eax\n", offset);
+    emit_ast_impl(outfile, ast->bi_op.rhs, env, depth + 1, NULL);
+    fprintf(outfile, "\tmov %%eax, -%d(%%rbp)\n", offset);
+    emit_ast_impl(outfile, ast->bi_op.lhs, env, depth + 2, NULL);
+    fprintf(outfile, "\tsub -%d(%%rbp), %%eax\n", offset);
     if(strcmp(to, "%eax")) {
-      printf("\tmov %%eax, %s\n", to);
+      fprintf(outfile, "\tmov %%eax, %s\n", to);
     }
     break;
   }
   case AST_OP_DIV:
   {
     int const offset = depth * 4;
-    emit_ast_impl(ast->bi_op.rhs, env, depth + 1, NULL);
-    printf("\tmov %%eax, -%d(%%rbp)\n", offset);
-    emit_ast_impl(ast->bi_op.lhs, env, depth + 2, NULL);
-    printf("\tcltd\n");
-    printf("\tidivl -%d(%%rbp)\n", offset);
+    emit_ast_impl(outfile, ast->bi_op.rhs, env, depth + 1, NULL);
+    fprintf(outfile, "\tmov %%eax, -%d(%%rbp)\n", offset);
+    emit_ast_impl(outfile, ast->bi_op.lhs, env, depth + 2, NULL);
+    fprintf(outfile, "\tcltd\n");
+    fprintf(outfile, "\tidivl -%d(%%rbp)\n", offset);
     if(strcmp(to, "%eax")) {
-      printf("\tmov %%eax, %s\n", to);
+      fprintf(outfile, "\tmov %%eax, %s\n", to);
     }
     break;
   }
@@ -80,23 +80,23 @@ void emit_ast_impl(Ast const* ast, Env const* env, int depth, char const* to) {
   {
     char reg[MAX_REG_LEN];
     snprintf(reg, MAX_REG_LEN, "-%d(%%rbp)", ast->bi_op.lhs->var->offset);
-    emit_ast_impl(ast->bi_op.rhs, env, depth + 1, reg);
+    emit_ast_impl(outfile, ast->bi_op.rhs, env, depth + 1, reg);
     break;
   }
   case AST_SYM:
-    printf("\tmov -%d(%%rbp), %s\n", ast->var->offset, to);
+    fprintf(outfile, "\tmov -%d(%%rbp), %s\n", ast->var->offset, to);
     break;
   case AST_SYM_DEFINE:
     break;
   case AST_STATEMENT:
-    emit_ast_impl(ast->statement->val, env, depth, to);
+    emit_ast_impl(outfile, ast->statement->val, env, depth, to);
     break;
   case AST_STATEMENTS:
     FOREACH(Statement, ast->statements->val, s) {
-      emit_ast_impl(make_ast_statement(s), env, depth + 1, NULL);
+      emit_ast_impl(outfile, make_ast_statement(s), env, depth + 1, NULL);
     }
     if(strcmp(to, "%eax")) {
-      printf("\tmov %%eax, %s\n", to);
+      fprintf(outfile, "\tmov %%eax, %s\n", to);
     }
     break;
   case AST_FUNCALL:
@@ -107,45 +107,46 @@ void emit_ast_impl(Ast const* ast, Env const* env, int depth, char const* to) {
       warn("argc over 6 is not impled now");
       break;
     }
-    save_regs(argc, depth + 1);
+    save_regs(outfile, argc, depth + 1);
     for(int i = 0; i < argc; ++i) {
       Ast* const arg = ast->funcall->args[i];
       if(arg->type == AST_INT) {
         char reg[MAX_REG_LEN];
         snprintf(reg, MAX_REG_LEN, "%%%s", REGS[i]);
-        emit_int_to(arg, reg);
+        emit_int_to(outfile, arg, reg);
       } else {
-        emit_ast_impl(arg, env, depth+7, NULL);
-        printf("\tmov %%eax, %%%s\n", REGS[i]);
+        emit_ast_impl(outfile, arg, env, depth+7, NULL);
+        fprintf(outfile, "\tmov %%eax, %%%s\n", REGS[i]);
       }
     }
-    printf("\tcall %s\n", name);
+    fprintf(outfile, "\tcall %s\n", name);
     if(strcmp(to, "%eax")) {
-      printf("\tmov %%eax, %s\n", to);
+      fprintf(outfile, "\tmov %%eax, %s\n", to);
     }
-    restore_regs(argc, depth + 1);
+    restore_regs(outfile, argc, depth + 1);
     break;
   }
   case AST_BLOCK:
-    emit_ast_impl(ast->block->val, env, depth, to);
+    emit_ast_impl(outfile, ast->block->val, env, depth, to);
     break;
   default:
     warn("never come!!!(type: %s)\n", show_AstType(t));
     break;
   }
-  printf("# end of %s\n", show_AstType(t));
+  fprintf(outfile, "# end of %s\n", show_AstType(t));
 }
 
-void emit_ast(Ast const* ast, Env const* env, int depth) {
-  emit_ast_impl(ast, env, depth, NULL);
+void emit_ast(FILE* outfile, Ast const* ast, Env const* env, int depth) {
+  emit_ast_impl(outfile, ast, env, depth, NULL);
 }
 
-void emit_func(Ast const* ast, Env const* env) {
+void emit_func(FILE* outfile, Ast const* ast, Env const* env) {
   assert(ast != NULL);
   assert(ast->type == AST_FUNDEFIN);
   FunDef const* const func = ast->fundef;
 
-  printf(
+  fprintf(
+    outfile,
     "\t.text\n"
     "\t.global main\n"
     "%s:\n"
@@ -153,14 +154,14 @@ void emit_func(Ast const* ast, Env const* env) {
     "\tmovq %%rsp, %%rbp\n"
     , func->name
   );
-  emit_ast(func->body, env, list_of_Var_length(env->vars) + 1);
-  printf("\tmov $0, %%eax\n");
-  printf("\tpopq %%rbp\n");
-  printf("\tret\n");
+  emit_ast(outfile, func->body, env, list_of_Var_length(env->vars) + 1);
+  fprintf(outfile, "\tmov $0, %%eax\n");
+  fprintf(outfile, "\tpopq %%rbp\n");
+  fprintf(outfile, "\tret\n");
 }
 
-void emit(Ast const* ast, Env const* env) {
-  emit_func(ast, env);
+void emit(FILE* outfile, Ast const* ast, Env const* env) {
+  emit_func(outfile, ast, env);
 }
 
 enum Mode {
@@ -173,7 +174,9 @@ enum Mode {
 int main(int argc, char** argv) {
   int opt;
   enum Mode mode = EMIT;
-  while ((opt = getopt(argc, argv, "tad")) != -1) {
+  FILE* infile = stdin;
+  FILE* outfile = stdout;
+  while ((opt = getopt(argc, argv, "tado:")) != -1) {
     switch (opt) {
     case 't':
       mode = TOKENIZE;
@@ -184,26 +187,26 @@ int main(int argc, char** argv) {
     case 'd':
       mode = DUMP;
       break;
+    case 'o':
+      outfile = fopen(optarg, "w+");
+      assert(outfile != NULL);
+      break;
     default: /* '?' */
       printf("Usage: %s\n", argv[0]);
       break;
     }
   }
-  FILE* file;
   if(optind < argc) {
     // src file
     if(argc - optind > 2) {
       warn("now, only one src file acceptable\n");
     }
-    file = fopen(argv[optind], "r");
-    assert(file != NULL);
-  } else {
-    // read from stdin
-    file = stdin;
+    infile = fopen(argv[optind], "r");
+    assert(infile != NULL);
   }
 
-  INTRUSIVE_LIST_OF(Token) ts = tokenize(file);
-  fclose(file);
+  INTRUSIVE_LIST_OF(Token) ts = tokenize(infile);
+  fclose(infile);
   if(mode == TOKENIZE) {
     printf("col: %d\n", list_of_Token_length(ts));
     print_Tokens(ts);
@@ -222,7 +225,8 @@ int main(int argc, char** argv) {
     printf("\nenv:\n");
     print_env(env);
   } else {
-    emit(ast, env);
+    emit(outfile, ast, env);
+    fclose(outfile);
   }
 
   return 0;

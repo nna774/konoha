@@ -3,7 +3,7 @@
 konoha=./konoha
 
 compile() {
-    echo "$1" | "$konoha" > tmp/out.s
+    echo "$1" | "$konoha" -o tmp/out.s
     if [ $? != 0 ]; then
 	echo "compilation fail"
 	exit -1
