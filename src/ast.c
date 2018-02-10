@@ -707,13 +707,18 @@ void print_ast(Ast const* ast) {
     printf(")");
     break;
   case AST_STATEMENT:
-    if(ast->statement->type == RETURN_STATEMENT){
+    switch(ast->statement->type) {
+    case NORMAL_STATEMENT:
+      print_ast(ast->statement->val);
+      break;
+    case RETURN_STATEMENT:
       printf("(return ");
       print_ast(ast->statement->val);
       printf(")");
       break;
+    default:
+      warn("unimpled statement type(%s)\n", show_StatementType(ast->statement->type));
     }
-    print_ast(ast->statement->val);
     break;
   case AST_STATEMENTS:
     FOREACH(Statement, ast->statements->val, s) {

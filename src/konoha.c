@@ -89,14 +89,19 @@ void emit_ast_impl(FILE* outfile, Ast const* ast, Env const* env, int depth, cha
   case AST_SYM_DEFINE:
     break;
   case AST_STATEMENT:
-    if(ast->statement->type == RETURN_STATEMENT){
+    switch(ast->statement->type) {
+    case NORMAL_STATEMENT:
+      emit_ast_impl(outfile, ast->statement->val, env, depth, to);
+      break;
+    case RETURN_STATEMENT:
       fprintf(outfile, "# return statement\n");
       emit_ast_impl(outfile, ast->statement->val, env, depth, NULL);
       fprintf(outfile, "\tpopq %%rbp\n");
       fprintf(outfile, "\tret\n");
       break;
+    default:
+      warn("unimpled statement type(%s)\n", show_StatementType(ast->statement->type));
     }
-    emit_ast_impl(outfile, ast->statement->val, env, depth, to);
     break;
   case AST_STATEMENTS:
     FOREACH(Statement, ast->statements->val, s) {
