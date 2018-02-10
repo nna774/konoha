@@ -27,6 +27,12 @@ ENUM_WITH_SHOW(
   AST_UNKNOWN,
 )
 
+ENUM_WITH_SHOW(
+  StatementType,
+  NORMAL_STATEMENT,
+  RETURN_STATEMENT,
+)
+
 struct Ast;
 typedef struct Ast Ast;
 struct Var;
@@ -78,7 +84,10 @@ struct Env {
 };
 
 struct Statement {
-  Ast* val;
+  StatementType type;
+  union {
+    Ast* val;
+  };
   INTRUSIVE_LIST_HOOK(Statement);
 };
 

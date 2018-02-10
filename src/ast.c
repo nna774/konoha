@@ -156,7 +156,14 @@ Ast* make_ast_bi_op(AstType const t, Ast const* lhs, Ast const* rhs) {
 
 Statement* make_statement(Ast* st) {
   Statement* const s = new_Statement();
+  s->type = NORMAL_STATEMENT;
   s->val = st;
+  return s;
+}
+
+Statement* make_return_statement(Ast* st) {
+  Statement* const s = make_statement(st);
+  s->type = RETURN_STATEMENT;
   return s;
 }
 
@@ -442,6 +449,18 @@ Ast* parse_expr(Env* env, Tokens ts, int prio) {
   return NULL; // never come
 }
 
+bool parse_semicolon(Tokens ts) {
+  Token t = pop_Token(ts);
+  if(t.type != SEMICOLON_T) {
+    if(t.type == EOF_T) { warn("unterminated expr(got unexpeced EOF)\n"); }
+    else {
+      warn("unterminated expr(got %s)\n", c_str(t.string));
+    }
+    return false;
+  }
+  return true;
+}
+
 Statement* parse_sym_define(Env* env, Tokens ts, Type* type) {
   char const* sym_name = c_str(pop_Token(ts).string);
   Token const token = peek_Token(ts);
@@ -472,22 +491,33 @@ Statement* parse_statement(Env* env, Tokens ts) {
   }
   Type* const type = parse_type(env, ts);
   if(type != NULL) {
-    return parse_sym_define(env, ts, type);
+    Statement* const s = parse_sym_define(env, ts, type);
+    if(!parse_semicolon(ts)) {
+      return NULL;
+    }
+    return s;
+  }
+
+  bool is_return = false;
+  Token token = peek_Token(ts);
+  if(token.type == KEYWORD_T && !strcmp(c_str(token.string), "return")) {
+    // return statement
+    pop_Token(ts);
+    is_return = true;
   }
 
   int const prio = 0;
   Ast* const ast = parse_expr(env, ts, prio);
   assert(ast != NULL);
 
-  Token t = pop_Token(ts);
-  if(t.type != SEMICOLON_T) {
-    if(t.type == EOF_T) { warn("unterminated expr(got unexpeced EOF)\n"); }
-    else {
-      warn("unterminated expr(got %s)\n", c_str(t.string));
-    }
+
+  if(!parse_semicolon(ts)) {
     return NULL;
   }
 
+  if(is_return) {
+    return make_return_statement(ast);
+  }
   return make_statement(ast);
 }
 
@@ -654,6 +684,12 @@ void print_ast(Ast const* ast) {
     printf(")");
     break;
   case AST_STATEMENT:
+    if(ast->statement->type == RETURN_STATEMENT){
+      printf("(return ");
+      print_ast(ast->statement->val);
+      printf(")");
+      break;
+    }
     print_ast(ast->statement->val);
     break;
   case AST_STATEMENTS:

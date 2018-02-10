@@ -138,6 +138,9 @@ int a;
 
 test_ast "(defun f<char()> () (do (defvar a)(let a 0)))" "char f() {char a;a=0;}"
 
+test_ast "(defun f<int()> () (do (return 42)))" "int f() {return 42;}"
+test_ast "(defun f<int()> () (do (return 42)))" "int f() {return(42);}"
+
 test "0" "int main() {print_int(0);}"
 test "42" "int main() {print_int(42);}"
 test "100" "int main() {print_int(100);}"
