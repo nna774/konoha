@@ -33,6 +33,7 @@ ENUM_WITH_SHOW(
   NORMAL_STATEMENT,
   RETURN_STATEMENT,
   IF_STATEMENT,
+  WHILE_STATEMENT,
 )
 
 struct Ast;
@@ -97,6 +98,10 @@ struct Statement {
       Statement* body;
       Statement* else_body;
     } if_val;
+    struct {
+      Ast* cond;
+      Statement* body;
+    } while_val;
   };
   INTRUSIVE_LIST_HOOK(Statement);
 };

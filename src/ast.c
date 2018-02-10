@@ -182,6 +182,14 @@ Statement* make_if_statement(Ast* cond, Statement* body, Statement* else_body) {
   return s;
 }
 
+Statement* make_while_statement(Ast* cond, Statement* body) {
+  Statement* const s = new_Statement();
+  s->type = WHILE_STATEMENT;
+  s->while_val.cond = cond;
+  s->while_val.body = body;
+  return s;
+}
+
 Ast* to_ast(AstType t, void* v) {
   Ast* const ast = new_Ast();
   ast->type = t;
@@ -527,6 +535,23 @@ Statement* parse_if_statement(Env* env, Tokens ts) {
   return make_if_statement(cond, body, else_body);
 }
 
+Statement* parse_while_statement(Env* env, Tokens ts) {
+  Token t = pop_Token(ts);
+  if(t.type != OPEN_PAREN_T || head_char(t.string) != '(') {
+    warn("unexpected token %s\n", c_str(t.string));
+    return NULL;
+  }
+  int const prio = 0;
+  Ast* cond = parse_expr(env, ts, prio);
+  t = pop_Token(ts);
+  if(t.type != CLOSE_PAREN_T || head_char(t.string) != ')') {
+    warn("unexpected token %s\n", c_str(t.string));
+    return NULL;
+  }
+  Statement* body = parse_statement(env, ts);
+  return make_while_statement(cond, body);
+}
+
 Statement* parse_statement(Env* env, Tokens ts) {
   {
     Token t = peek_Token(ts);
@@ -559,6 +584,11 @@ Statement* parse_statement(Env* env, Tokens ts) {
     // if statement
     pop_Token(ts);
     return parse_if_statement(env, ts);
+  }
+  if(token.type == KEYWORD_T && !strcmp(c_str(token.string), "while")) {
+    // while statement
+    pop_Token(ts);
+    return parse_while_statement(env, ts);
   }
 
   int const prio = 0;
@@ -763,6 +793,13 @@ void print_ast(Ast const* ast) {
         printf(") (");
         print_ast(make_ast_statement(ast->statement->if_val.else_body));
       }
+      printf(")");
+      break;
+    case WHILE_STATEMENT:
+      printf("(while (");
+      print_ast(ast->statement->while_val.cond);
+      printf(") (");
+      print_ast(make_ast_statement(ast->statement->while_val.body));
       printf(")");
       break;
     default:

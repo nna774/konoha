@@ -126,6 +126,19 @@ void emit_ast_impl(FILE* outfile, Ast const* ast, Env const* env, int depth, cha
       fprintf(outfile, "%s:\n", join);
       break;
     }
+    case WHILE_STATEMENT:
+    {
+      char const* const init = make_label();
+      char const* const join = make_label();
+      fprintf(outfile, "%s:\n", init);
+      emit_ast_impl(outfile, ast->statement->while_val.cond, env, depth, NULL);
+      fprintf(outfile, "\tcmpl $0, %%eax\n");
+      fprintf(outfile, "\tje %s\n", join);
+      emit_ast_impl(outfile, make_ast_statement(ast->statement->if_val.body), env, depth, NULL);
+      fprintf(outfile, "\tjmp %s\n", init);
+      fprintf(outfile, "%s:\n", join);
+      break;
+    }
     default:
       warn("unimpled statement type(%s)\n", show_StatementType(ast->statement->type));
     }
