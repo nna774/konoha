@@ -22,9 +22,9 @@ test() {
 
     compile "$expr"
     res=`./tmp/a.out`
-    if [ $? != 0 ]; then
-	echo "execution fail"
-	exit -1
+    ret=$?
+    if [ $ret != 0 ]; then
+        echo "got nonzero return code($ret)"
     fi
     if [ "x$res" != "x$expected" ]; then
 	echo "Test failed: expected $expected, but got $res"

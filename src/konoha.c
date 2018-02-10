@@ -155,13 +155,16 @@ void emit_func(FILE* outfile, Ast const* ast, Env const* env) {
   fprintf(
     outfile,
     "\t.text\n"
-    "\t.global main\n"
+    "\t.global %s\n"
     "%s:\n"
     "\tpushq %%rbp\n"
     "\tmovq %%rsp, %%rbp\n"
     , func->name
+    , func->name
   );
   emit_ast(outfile, func->body, env, list_of_Var_length(env->vars) + 1);
+  fprintf(outfile, "\tpopq %%rbp\n");
+  fprintf(outfile, "\tret\n");
 }
 
 void emit(FILE* outfile, Ast const* ast, Env const* env) {
