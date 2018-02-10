@@ -145,6 +145,11 @@ test_ast "(defun f<int()> () (do (return 42)))(defun g<int()> () (do (return (f)
 
 test_ast "(defun main<int()> () (do (if (0) ((do (return (print_int 42)))) ((return (print_int 5)))))" "int main() { if(0) { return print_int(42);} else return print_int(5); }"
 test_ast "(defun main<int()> () (do (if (1) ((do (return (print_int 42)))) ((return (print_int 5)))))" "int main() { if(1) { return print_int(42);} else return print_int(5); }"
+test_ast "(defun main<int()> () (do (if (1) ((if (0) ((print_int 0)) ((print_int 1)))))" "int main(){
+if(1)
+ if(0) print_int(0);
+ else print_int(1);
+}"
 
 test "0" "int main() {print_int(0);}"
 test "42" "int main() {print_int(42);}"
@@ -227,3 +232,8 @@ test "5" "int main() { if(0) { return print_int(42);} else return print_int(5); 
 test "42" "int main() { if(1) { return print_int(42);} else return print_int(5); }"
 test "42" "int main() { if(42) { return print_int(42);} else return print_int(5); }"
 test "42" "int main() { if(-1) { return print_int(42);} else return print_int(5); }"
+test "1" "int main(){
+if(1)
+ if(0) print_int(0);
+ else print_int(1);
+}"

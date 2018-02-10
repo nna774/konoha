@@ -120,7 +120,7 @@ void emit_ast_impl(FILE* outfile, Ast const* ast, Env const* env, int depth, cha
         emit_ast_impl(outfile, make_ast_statement(ast->statement->if_val.else_body), env, depth, NULL);
         fprintf(outfile, "\tjmp %s\n", join);
       } else {
-        fprintf(outfile, "\tjne %s\n", join);
+        fprintf(outfile, "\tje %s\n", join);
         emit_ast_impl(outfile, make_ast_statement(ast->statement->if_val.body), env, depth, NULL);
       }
       fprintf(outfile, "%s:\n", join);
