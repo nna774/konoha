@@ -151,6 +151,8 @@ if(1)
  else print_int(1);
 }"
 
+test_ast "(defun main<int()> () (do (defvar a)(do (let a 1))))" "int main() {int a; { a = 1; } }"
+
 test "0" "int main() {print_int(0);}"
 test "42" "int main() {print_int(42);}"
 test "100" "int main() {print_int(100);}"

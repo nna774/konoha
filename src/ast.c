@@ -14,6 +14,7 @@ Ast* parse_funcall(Env* env, Tokens ts, char const* name);
 Ast* parse_block(Env* env, Tokens ts);
 Statement* parse_statement(Env* env, Tokens ts);
 char const* show_AstType(AstType);
+Var* find_var_by_name(Env* env, char const* name);
 int const MAX_ARGC = 6;
 
 Ast* new_Ast() {
@@ -145,12 +146,8 @@ Ast* make_ast_int(int n) {
   return ast;
 }
 
-bool same_name_var(Var const* lhs, Var const* rhs) {
-  return !strcmp(lhs->name, rhs->name);
-}
-
 Ast* make_ast_symbol_ref(Env* env, Var* var) {
-  Var* const v = list_of_Var_find_cond(env->vars, var, same_name_var);
+  Var* const v = find_var_by_name(env, var->name);
   assert(v != NULL);
   return to_ast(AST_SYM, v);
 }
@@ -269,6 +266,9 @@ Var* find_var_by_name(Env* env, char const* name) {
     if(!strcmp(v->name, name)) {
       return v;
     }
+  }
+  if(env->parent != NULL) {
+    return find_var_by_name(env->parent, name);
   }
   return NULL;
 }

@@ -83,7 +83,7 @@ struct Var {
 };
 
 struct Env {
-  Env const* parent;
+  Env* parent;
   INTRUSIVE_LIST_OF(Var) vars;
   INTRUSIVE_LIST_OF(Type) types;
 };
