@@ -16,7 +16,9 @@ char const* show_AstType(AstType);
 int const MAX_ARGC = 6;
 
 Ast* new_Ast() {
-  return malloc(sizeof(Ast));
+  Ast* ast = malloc(sizeof(Ast));
+  init_Ast_hook(ast);
+  return ast;
 }
 
 Ast** new_Ast_array(size_t size) {
@@ -111,6 +113,12 @@ FunDef* new_FunDef(FunType type, char const* name, Var** args, Ast* body) {
   return t;
 }
 
+Global* new_Global() {
+  Global* const g = malloc(sizeof(Global));
+  g->list = new_list_of_Ast();
+  return g;
+}
+
 int const MAX_BUF_LEN = 256;
 
 char const * op_from_type(AstType t) {
@@ -187,6 +195,10 @@ Ast* to_ast(AstType t, void* v) {
   case AST_SYM_DEFINE:
     ast->var = v;
     break;
+  case AST_GLOBAL:
+    ast->global = new_Global();
+    ast->global->list = v;
+    break;
   default:
     warn("unimpled type(%s)", show_AstType(t));
   }
@@ -223,6 +235,11 @@ Ast* make_ast_funcall(char const* name, int argc, Ast** args) {
   ast->funcall->args = args;
   return ast;
 }
+
+Ast* make_global(INTRUSIVE_LIST_OF(Ast) asts) {
+  return to_ast(AST_GLOBAL, asts);
+}
+
 
 Type* find_type_by_name(Env const* env, char const* name) {
   assert(env->types != NULL);
@@ -635,8 +652,14 @@ Ast* parse_fundef(Env* env, Tokens ts) {
 }
 
 Ast* parse(Env* env, Tokens ts) {
-  Ast* const ast = parse_fundef(env, ts);
-  return ast;
+  Token t;
+  INTRUSIVE_LIST_OF(Ast) asts = new_list_of_Ast();
+  while(t = peek_Token(ts), t.type != EOF_T) {
+    Ast* const ast = parse_fundef(env, ts);
+    assert(ast != NULL);
+    list_of_Ast_append(asts, ast);
+  }
+  return make_global(asts);
 }
 
 Ast* make_ast(Env* env, Tokens ts) {
@@ -752,6 +775,13 @@ void print_ast(Ast const* ast) {
     printf("(do ");
     print_ast(ast->block->val);
     printf(")");
+    break;
+  }
+  case AST_GLOBAL:
+  {
+    FOREACH(Ast, ast->global->list, s) {
+      print_ast(s);
+    }
     break;
   }
   case AST_EMPTY:

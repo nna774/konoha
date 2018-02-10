@@ -154,7 +154,6 @@ void emit_func(FILE* outfile, Ast const* ast, Env const* env) {
 
   fprintf(
     outfile,
-    "\t.text\n"
     "\t.global %s\n"
     "%s:\n"
     "\tpushq %%rbp\n"
@@ -168,7 +167,12 @@ void emit_func(FILE* outfile, Ast const* ast, Env const* env) {
 }
 
 void emit(FILE* outfile, Ast const* ast, Env const* env) {
-  emit_func(outfile, ast, env);
+  assert(ast != NULL);
+  assert(ast->type == AST_GLOBAL);
+  fprintf(outfile, "\t.text\n");
+  FOREACH(Ast, ast->global->list, s) {
+    emit_func(outfile, s, env);
+  }
 }
 
 enum Mode {

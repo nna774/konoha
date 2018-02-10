@@ -22,6 +22,7 @@ ENUM_WITH_SHOW(
   AST_FUNDECLAR,
   AST_FUNDEFIN,
   AST_BLOCK,
+  AST_GLOBAL,
 
   AST_EMPTY,
   AST_UNKNOWN,
@@ -53,10 +54,13 @@ struct FunType;
 typedef struct FunType FunType;
 struct FunDef;
 typedef struct FunDef FunDef;
+struct Global;
+typedef struct Global Global;
 
 DEFINE_INTRUSIVE_LIST(Type);
 DEFINE_INTRUSIVE_LIST(Var);
 DEFINE_INTRUSIVE_LIST(Statement);
+DEFINE_INTRUSIVE_LIST(Ast);
 
 typedef struct Bi_op {
   Ast const* lhs;
@@ -119,6 +123,10 @@ struct FunDef {
   Ast* body;
 };
 
+struct Global {
+  INTRUSIVE_LIST_OF(Ast) list;
+};
+
 struct Ast {
   AstType type;
   union {
@@ -130,7 +138,9 @@ struct Ast {
     FunCall* funcall;
     Block* block;
     FunDef* fundef;
+    Global* global;
   };
+  INTRUSIVE_LIST_HOOK(Ast);
 };
 
 Env* new_Env();
