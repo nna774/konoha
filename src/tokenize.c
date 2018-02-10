@@ -64,7 +64,7 @@ bool is_keyword(String str_) {
     "while",
   };
   for(int i = 0; i < (int)(sizeof(keywords) / sizeof(*keywords)); ++i) {
-    if(strcmp(str, keywords[i])) {
+    if(!strcmp(str, keywords[i])) {
       return true;
     }
   }
