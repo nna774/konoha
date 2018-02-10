@@ -141,6 +141,8 @@ test_ast "(defun f<char()> () (do (defvar a)(let a 0)))" "char f() {char a;a=0;}
 test_ast "(defun f<int()> () (do (return 42)))" "int f() {return 42;}"
 test_ast "(defun f<int()> () (do (return 42)))" "int f() {return(42);}"
 
+test_ast "(defun f<int()> () (do (return 42)))(defun g<int()> () (do (return (f))))(defun main<int()> () (do (print_int (g))))" "int f() { return 42;} int g() {return f();} int main() { print_int(g()); }"
+
 test "0" "int main() {print_int(0);}"
 test "42" "int main() {print_int(42);}"
 test "100" "int main() {print_int(100);}"
@@ -215,3 +217,5 @@ test "10" "int main() {print_int(add(add(1, 2), add(3, 4)));}"
 
 test "24" "int main() {print_int(mul(mul(1, 2), mul(3, 4)));}"
 test "1024" "int main() {print_int(add(add(1, 2), add(3, 4)));print_int(mul(mul(1, 2), mul(3, 4)));}"
+
+test "42" "int f() { return 42;} int g() {return f();} int main() { print_int(g()); }"
