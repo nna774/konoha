@@ -442,6 +442,22 @@ Ast* parse_expr(Env* env, Tokens ts, int prio) {
   return NULL; // never come
 }
 
+Statement* parse_sym_define(Env* env, Tokens ts, Type* type) {
+  char const* sym_name = c_str(pop_Token(ts).string);
+  Token const token = peek_Token(ts);
+  char const c = head_char(token.string);
+  if(token.type == SEMICOLON_T) {
+    // sym define
+    return make_statement(make_ast_val_define(env, type, sym_name));
+  }
+  if(c == '=') {
+    // sym define with init val
+    return NULL;
+  }
+  warn("unexpected token(%s)\n", c_str(token.string));
+  return NULL;
+}
+
 Statement* parse_statement(Env* env, Tokens ts) {
   {
     Token t = peek_Token(ts);
@@ -456,19 +472,7 @@ Statement* parse_statement(Env* env, Tokens ts) {
   }
   Type* const type = parse_type(env, ts);
   if(type != NULL) {
-    char const* sym_name = c_str(pop_Token(ts).string);
-    Token const token = peek_Token(ts);
-    char const c = head_char(token.string);
-    if(token.type == SEMICOLON_T) {
-      // sym define
-      return make_statement(make_ast_val_define(env, type, sym_name));
-    }
-    if(c == '=') {
-      // sym define with init val
-      return NULL;
-    }
-    warn("unexpected token(%s)\n", c_str(token.string));
-    return NULL;
+    return parse_sym_define(env, ts, type);
   }
 
   int const prio = 0;
