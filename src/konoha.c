@@ -89,6 +89,13 @@ void emit_ast_impl(FILE* outfile, Ast const* ast, Env const* env, int depth, cha
   case AST_SYM_DEFINE:
     break;
   case AST_STATEMENT:
+    if(ast->statement->type == RETURN_STATEMENT){
+      fprintf(outfile, "# return statement\n");
+      emit_ast_impl(outfile, ast->statement->val, env, depth, NULL);
+      fprintf(outfile, "\tpopq %%rbp\n");
+      fprintf(outfile, "\tret\n");
+      break;
+    }
     emit_ast_impl(outfile, ast->statement->val, env, depth, to);
     break;
   case AST_STATEMENTS:
@@ -155,9 +162,6 @@ void emit_func(FILE* outfile, Ast const* ast, Env const* env) {
     , func->name
   );
   emit_ast(outfile, func->body, env, list_of_Var_length(env->vars) + 1);
-  fprintf(outfile, "\tmov $0, %%eax\n");
-  fprintf(outfile, "\tpopq %%rbp\n");
-  fprintf(outfile, "\tret\n");
 }
 
 void emit(FILE* outfile, Ast const* ast, Env const* env) {
