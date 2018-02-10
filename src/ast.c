@@ -12,6 +12,7 @@ Ast* parse_expr(Env* env, Tokens ts, int prio);
 Type* parse_type(Env* env, Tokens ts);
 Ast* parse_funcall(Env* env, Tokens ts, char const* name);
 Ast* parse_block(Env* env, Tokens ts);
+Statement* parse_statement(Env* env, Tokens ts);
 char const* show_AstType(AstType);
 int const MAX_ARGC = 6;
 
@@ -172,6 +173,15 @@ Statement* make_statement(Ast* st) {
 Statement* make_return_statement(Ast* st) {
   Statement* const s = make_statement(st);
   s->type = RETURN_STATEMENT;
+  return s;
+}
+
+Statement* make_if_statement(Ast* cond, Statement* body, Statement* else_body) {
+  Statement* const s = new_Statement();
+  s->type = IF_STATEMENT;
+  s->if_val.cond = cond;
+  s->if_val.body = body;
+  s->if_val.else_body = else_body;
   return s;
 }
 
@@ -451,7 +461,7 @@ Ast* parse_expr(Env* env, Tokens ts, int prio) {
     }
     case ';':
     case ')':
-    case ',':
+    case ',': //
     case '}':
     {
       push_Token(ts, t);
@@ -494,6 +504,29 @@ Statement* parse_sym_define(Env* env, Tokens ts, Type* type) {
   return NULL;
 }
 
+Statement* parse_if_statement(Env* env, Tokens ts) {
+  Token t = pop_Token(ts);
+  if(t.type != OPEN_PAREN_T || head_char(t.string) != '(') {
+    warn("unexpected token %s\n", c_str(t.string));
+    return NULL;
+  }
+  int const prio = 0;
+  Ast* cond = parse_expr(env, ts, prio);
+  t = pop_Token(ts);
+  if(t.type != CLOSE_PAREN_T || head_char(t.string) != ')') {
+    warn("unexpected token %s\n", c_str(t.string));
+    return NULL;
+  }
+  Statement* body = parse_statement(env, ts);
+  Statement* else_body = NULL;
+  t = peek_Token(ts);
+  if(t.type == KEYWORD_T && !strcmp(c_str(t.string), "else")) {
+    pop_Token(ts);
+    else_body = parse_statement(env, ts);
+  }
+  return make_if_statement(cond, body, else_body);
+}
+
 Statement* parse_statement(Env* env, Tokens ts) {
   {
     Token t = peek_Token(ts);
@@ -521,6 +554,11 @@ Statement* parse_statement(Env* env, Tokens ts) {
     // return statement
     pop_Token(ts);
     is_return = true;
+  }
+  if(token.type == KEYWORD_T && !strcmp(c_str(token.string), "if")) {
+    // if statement
+    pop_Token(ts);
+    return parse_if_statement(env, ts);
   }
 
   int const prio = 0;
@@ -714,6 +752,17 @@ void print_ast(Ast const* ast) {
     case RETURN_STATEMENT:
       printf("(return ");
       print_ast(ast->statement->val);
+      printf(")");
+      break;
+    case IF_STATEMENT:
+      printf("(if (");
+      print_ast(ast->statement->if_val.cond);
+      printf(") (");
+      print_ast(make_ast_statement(ast->statement->if_val.body));
+      if(ast->statement->if_val.else_body != NULL) {
+        printf(") (");
+        print_ast(make_ast_statement(ast->statement->if_val.else_body));
+      }
       printf(")");
       break;
     default:

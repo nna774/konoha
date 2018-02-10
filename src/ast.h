@@ -32,6 +32,7 @@ ENUM_WITH_SHOW(
   StatementType,
   NORMAL_STATEMENT,
   RETURN_STATEMENT,
+  IF_STATEMENT,
 )
 
 struct Ast;
@@ -91,6 +92,11 @@ struct Statement {
   StatementType type;
   union {
     Ast* val;
+    struct {
+      Ast* cond;
+      Statement* body;
+      Statement* else_body;
+    } if_val;
   };
   INTRUSIVE_LIST_HOOK(Statement);
 };

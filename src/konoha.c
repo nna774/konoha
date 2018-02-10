@@ -9,6 +9,14 @@
 char const* const REGS[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 int const MAX_REG_LEN = 16;
 int const MAX_OP_LEN = 16;
+int const MAX_LABEL_LEN = 8;
+
+char const* make_label() {
+  int static cnt = 0;
+  char* const l = malloc(MAX_LABEL_LEN);
+  snprintf(l, MAX_LABEL_LEN, ".L%d", cnt++);
+  return l;
+}
 
 void save_regs(FILE* outfile, int argc, int depth) {
   for(int i = 0; i < argc; ++i) {
@@ -99,6 +107,25 @@ void emit_ast_impl(FILE* outfile, Ast const* ast, Env const* env, int depth, cha
       fprintf(outfile, "\tpopq %%rbp\n");
       fprintf(outfile, "\tret\n");
       break;
+    case IF_STATEMENT:
+    {
+      char const* const join = make_label();
+      emit_ast_impl(outfile, ast->statement->if_val.cond, env, depth, NULL);
+      fprintf(outfile, "\tcmpl $0, %%eax\n");
+      if(ast->statement->if_val.else_body != NULL) {
+        char const* const else_l = make_label();
+        fprintf(outfile, "\tje %s\n", else_l);
+        emit_ast_impl(outfile, make_ast_statement(ast->statement->if_val.body), env, depth, NULL);
+        fprintf(outfile, "%s:\n", else_l);
+        emit_ast_impl(outfile, make_ast_statement(ast->statement->if_val.else_body), env, depth, NULL);
+        fprintf(outfile, "\tjmp %s\n", join);
+      } else {
+        fprintf(outfile, "\tjne %s\n", join);
+        emit_ast_impl(outfile, make_ast_statement(ast->statement->if_val.body), env, depth, NULL);
+      }
+      fprintf(outfile, "%s:\n", join);
+      break;
+    }
     default:
       warn("unimpled statement type(%s)\n", show_StatementType(ast->statement->type));
     }
