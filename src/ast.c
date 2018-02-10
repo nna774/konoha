@@ -8,9 +8,8 @@
 #include "utils.h"
 
 Ast* to_ast(AstType t, void*);
-Type* read_type(Env* env, Tokens ts);
-char const* read_symbol(Tokens ts);
 Ast* parse_expr(Env* env, Tokens ts, int prio);
+Type* parse_type(Env* env, Tokens ts);
 Ast* parse_funcall(Env* env, Tokens ts, char const* name);
 Ast* parse_block(Env* env, Tokens ts);
 char const* show_AstType(AstType);
@@ -270,24 +269,7 @@ Ast* parse_int(Token t, int sign) {
 }
 
 Ast* parse_symbol_or_funcall(Env* env, Tokens ts) {
-  char const* name = read_symbol(ts);
-  Type* const t = find_type_by_name(env, name);
-  if(t != NULL) {
-    // type
-    char const* sym_name = read_symbol(ts);
-    Token const token = peek_Token(ts);
-    char const c = head_char(token.string);
-    if(token.type == SEMICOLON_T) {
-      // sym define
-      return make_ast_val_define(env, t, sym_name);
-    }
-    if(c == '=') {
-      // sym define with init val
-      return NULL;
-    }
-    warn("unexpected token(%s)\n", c_str(token.string));
-    return NULL;
-  }
+  char const* name = c_str(pop_Token(ts).string);
   Token const token = peek_Token(ts);
   char const c = head_char(token.string);
   if(token.type == OPEN_PAREN_T && c == '(') {
@@ -472,6 +454,23 @@ Statement* parse_statement(Env* env, Tokens ts) {
       return make_statement(parse_block(env, ts));
     }
   }
+  Type* const type = parse_type(env, ts);
+  if(type != NULL) {
+    char const* sym_name = c_str(pop_Token(ts).string);
+    Token const token = peek_Token(ts);
+    char const c = head_char(token.string);
+    if(token.type == SEMICOLON_T) {
+      // sym define
+      return make_statement(make_ast_val_define(env, type, sym_name));
+    }
+    if(c == '=') {
+      // sym define with init val
+      return NULL;
+    }
+    warn("unexpected token(%s)\n", c_str(token.string));
+    return NULL;
+  }
+
   int const prio = 0;
   Ast* const ast = parse_expr(env, ts, prio);
   assert(ast != NULL);
@@ -524,23 +523,32 @@ Ast* parse_block(Env* env, Tokens ts) {
   return make_ast_block(expanded, ss);
 }
 
-Type* read_type(Env* env, Tokens ts) {
-  Token const name = pop_Token(ts);
-  assert(name.type == IDENTIFIER_T);
-  Type* const type = find_type_by_name(env, c_str(name.string));
-  assert(type != NULL);
+Type* parse_type(Env* env, Tokens ts) {
+  Token const t = pop_Token(ts);
+  if(t.type == KEYWORD_T) {
+    char const* const str = c_str(t.string);
+    if(!strcmp(str, "int")) {
+      return find_type_by_name(env, "int");
+    }
+    if(!strcmp(str, "char")) {
+      return find_type_by_name(env, "char");
+    }
+  }
+  if(t.type != IDENTIFIER_T) {
+    push_Token(ts, t);
+    return NULL;
+  }
+  Type* const type = find_type_by_name(env, c_str(t.string));
+  if(type == NULL) {
+    push_Token(ts, t);
+    return NULL;
+  }
   return type;
 }
 
-char const* read_symbol(Tokens ts) {
-  Token const t = pop_Token(ts);
-  assert(t.type == IDENTIFIER_T);
-  return c_str(t.string);
-}
-
 Ast* parse_fundef(Env* env, Tokens ts) {
-  Type* const ret_type = read_type(env, ts);
-  char const* const name = read_symbol(ts);
+  Type* const ret_type = parse_type(env, ts);
+  char const* const name = c_str(pop_Token(ts).string);
   Token open = pop_Token(ts);
   char const o = head_char(open.string);
   if(open.type != OPEN_PAREN_T
@@ -560,9 +568,9 @@ Ast* parse_fundef(Env* env, Tokens ts) {
       break;
     }
     if(argc == 0) { continue; }
-    Type* const type = read_type(env, ts);
+    Type* const type = parse_type(env, ts);
     arg_types[argc - 1] = type;
-    char const* const name = read_symbol(ts);
+    char const* const name = c_str(pop_Token(ts).string);
     args[argc - 1] = add_sym_to_env(expanded, type, name);
     Token const t2 = peek_Token(ts);
     char const c2 = head_char(t2.string);

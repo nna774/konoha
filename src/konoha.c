@@ -215,7 +215,9 @@ int main(int argc, char** argv) {
 
   Env* const env = new_Env();
   Type* int_ = new_Type("int"); //
+  Type* char_ = new_Type("char"); //
   list_of_Type_append(env->types, int_);
+  list_of_Type_append(env->types, char_);
   Ast* const ast = make_ast(env, ts);
   if (mode == AST) {
     print_ast(ast);

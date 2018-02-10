@@ -93,10 +93,10 @@ Token* read_identifier(FILE* fp) {
   while(c = getc(fp), is_identifier_char(c)) {
     append_char(str, c);
   }
+  ungetc(c, fp);
   if(is_keyword(str)) {
     return new_Token(str, KEYWORD_T);
   }
-  ungetc(c, fp);
   return new_Token(str, IDENTIFIER_T);
 }
 
