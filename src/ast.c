@@ -531,12 +531,16 @@ Type* parse_type(Env* env, Tokens ts) {
   Token const t = pop_Token(ts);
   if(t.type == KEYWORD_T) {
     char const* const str = c_str(t.string);
-    if(!strcmp(str, "int")) {
-      return find_type_by_name(env, "int");
+    char const* const types[] = {
+      "int",
+      "char"
+    };
+    for(int i = 0; i < (int)(sizeof(types)/sizeof(*types)); ++i) {
+      if(!strcmp(str, types[i])) {
+        return find_type_by_name(env, types[i]);
+      }
     }
-    if(!strcmp(str, "char")) {
-      return find_type_by_name(env, "char");
-    }
+    assert("never come!(unimpled");
   }
   if(t.type != IDENTIFIER_T) {
     push_Token(ts, t);
