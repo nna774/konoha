@@ -183,17 +183,20 @@ void emit_func(FILE* outfile, Ast const* ast, Env const* env) {
   assert(ast != NULL);
   assert(ast->type == AST_FUNDEFIN);
   FunDef const* const func = ast->fundef;
-
+  int const var_cnt = list_of_Var_length(env->vars) + 1;
+  int const stack = ((var_cnt * 4) / 16 + 1) * 16;
   fprintf(
     outfile,
     "\t.global %s\n"
     "%s:\n"
     "\tpushq %%rbp\n"
     "\tmovq %%rsp, %%rbp\n"
+    "\tsubq $%d, %%rbp\n"
     , func->name
     , func->name
+    , stack
   );
-  emit_ast(outfile, func->body, env, list_of_Var_length(env->vars) + 1);
+  emit_ast(outfile, func->body, env, var_cnt);
   fprintf(outfile, "\tpopq %%rbp\n");
   fprintf(outfile, "\tret\n");
 }
