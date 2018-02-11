@@ -104,6 +104,7 @@ void emit_ast_impl(FILE* outfile, Ast const* ast, Env const* env, int depth, cha
     case RETURN_STATEMENT:
       fprintf(outfile, "# return statement\n");
       emit_ast_impl(outfile, ast->statement->val, env, depth, NULL);
+      fprintf(outfile, "\tmovq %%rbp, %%rsp\n");
       fprintf(outfile, "\tpopq %%rbp\n");
       fprintf(outfile, "\tret\n");
       break;
@@ -204,12 +205,13 @@ void emit_func(FILE* outfile, Ast const* ast, Env const* env) {
     "%s:\n"
     "\tpushq %%rbp\n"
     "\tmovq %%rsp, %%rbp\n"
-    "\tsubq $%d, %%rbp\n"
+    "\tsubq $%d, %%rsp\n"
     , func->name
     , func->name
     , stack
   );
   emit_ast(outfile, func->body, env, var_cnt);
+  fprintf(outfile, "\tmovq %%rbp, %%rsp\n");
   fprintf(outfile, "\tpopq %%rbp\n");
   fprintf(outfile, "\tret\n");
 }
