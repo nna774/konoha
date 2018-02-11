@@ -193,12 +193,17 @@ void emit_ast(FILE* outfile, Ast const* ast, Env const* env, int depth) {
   emit_ast_impl(outfile, ast, env, depth, NULL);
 }
 
+int round16(int n) {
+  if(n % 16 == 0) { return n; }
+  return (n / 16 + 1) * 16;
+}
+
 void emit_func(FILE* outfile, Ast const* ast, Env const* env) {
   assert(ast != NULL);
   assert(ast->type == AST_FUNDEFIN);
   FunDef const* const func = ast->fundef;
   int const var_cnt = list_of_Var_length(env->vars) + 1;
-  int const stack = ((var_cnt * 4) / 16 + 1) * 16;
+  int const stack = round16(var_cnt * 4);
   fprintf(
     outfile,
     "\t.global %s\n"
