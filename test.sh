@@ -241,3 +241,9 @@ if(1)
 }"
 
 test "424140393837363534333231302928272625242322212019181716151413121110987654321" "int main(){ int a; a = 42; while (a) {print_int(a); a = a - 1;}}"
+test "10987654321" "int main(){ int a; a = 10; while (a) { print_int(a); a = a - 1;}}"
+test "10987654321" "int main(){ int a; a = 10; while (a) {if(a) print_int(a); a = a - 1;}}"
+test "1111111111" "int main(){ int a; a = 10; while (a) { print_int(1); a = a - 1;}}"
+test "1111111111" "int main(){ int a; a = 10; while (a) {if(a) print_int(1); a = a - 1;}}"
+test "1111111111" "int main(){ int a; a = 10; while (a) {if(a) { print_int(1); } a = a - 1;}}"
+test "1111111110" "int main(){ int a; a = 10; while (a) {if(a/2) { print_int(1); } else { print_int(0); } a = a - 1;}}"
