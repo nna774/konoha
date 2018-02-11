@@ -116,9 +116,9 @@ void emit_ast_impl(FILE* outfile, Ast const* ast, Env const* env, int depth, cha
         char const* const else_l = make_label();
         fprintf(outfile, "\tje %s\n", else_l);
         emit_ast_impl(outfile, make_ast_statement(ast->statement->if_val.body), env, depth, NULL);
+        fprintf(outfile, "\tjmp %s\n", join);
         fprintf(outfile, "%s:\n", else_l);
         emit_ast_impl(outfile, make_ast_statement(ast->statement->if_val.else_body), env, depth, NULL);
-        fprintf(outfile, "\tjmp %s\n", join);
       } else {
         fprintf(outfile, "\tje %s\n", join);
         emit_ast_impl(outfile, make_ast_statement(ast->statement->if_val.body), env, depth, NULL);
