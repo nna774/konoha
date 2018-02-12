@@ -443,6 +443,10 @@ Ast* parse_expr(Env* env, Tokens ts, int prio) {
   while(true) {
     Token const t = pop_Token(ts);
     char const* str = c_str(t.string);
+    if(t.type != OP_T) {
+      push_Token(ts, t);
+      return ast;
+    }
     if(!strcmp(str, "+") ||
        !strcmp(str, "-") ||
        !strcmp(str, "*") ||
@@ -467,13 +471,6 @@ Ast* parse_expr(Env* env, Tokens ts, int prio) {
       Ast* const lhs = ast;
       Ast* const rhs = parse_expr(env, ts, prio);
       ast = make_ast_bi_op(AST_OP_EQUAL, lhs, rhs);
-    } else if(!strcmp(str, ";") ||
-              !strcmp(str, ")") ||
-              !strcmp(str, ",") || //
-              !strcmp(str, "}")) {
-      // if t.type != OP_T ?
-      push_Token(ts, t);
-      return ast;
     } else {
       warn("never come!!!(got: %s)(token type: %s)\n", str, show_TokenType(t.type));
       return NULL;
