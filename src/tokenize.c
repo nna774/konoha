@@ -145,11 +145,14 @@ Token* read_operator_and_comment(FILE* fp) {
       return new_Token(from_char('*'), COMMENT_T);
     }
   }
-  if(c == '=') {
-    int const next = peek(fp);
-    if(next == '=') {
-      getc(fp);
-      return new_Token(to_String(2, "=="), OP_T);
+  char* const twices[] = { "==", "++", "--", };
+  for(int i = 0; i < (int)(sizeof(twices) / sizeof(*twices)); ++i) {
+    if(c == twices[i][0]) {
+      int const next = peek(fp);
+      if(next == twices[i][0]) {
+        getc(fp);
+        return new_Token(to_String(2, twices[i]), OP_T);
+      }
     }
   }
   return new_Token(from_char(c), OP_T);
