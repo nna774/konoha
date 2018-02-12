@@ -440,13 +440,12 @@ Ast* parse_expr(Env* env, Tokens ts, int prio) {
   assert(ast != NULL);
   while(true) {
     Token const t = pop_Token(ts);
-    char const c = head_char(t.string);
-    switch(c) {
-    case '+':
-    case '-':
-    case '*':
-    case '/':
-    {
+    char const* str = c_str(t.string);
+    if(!strcmp(str, "+") ||
+       !strcmp(str, "-") ||
+       !strcmp(str, "*") ||
+       !strcmp(str, "/")) {
+      char const c = str[0];
       int const c_prio = priority(c);
       if(c_prio < prio) {
         push_Token(ts, t);
@@ -456,31 +455,25 @@ Ast* parse_expr(Env* env, Tokens ts, int prio) {
       Ast* const lhs = ast;
       Ast* const rhs = parse_expr(env, ts, c_prio + 1);
       ast = make_ast_bi_op(type, lhs, rhs);
-      break;
-    }
-    case '=':
-    {
+    } else if(!strcmp(str, "=")) {
       Ast* const lhs = ast;
       Ast* const rhs = parse_expr(env, ts, prio);
       assert(lhs->type == AST_SYM);
       lhs->var->initialized = true;
       ast = make_ast_bi_op(AST_OP_ASSIGN, lhs, rhs);
-      break;
-    }
-    case ';':
-    case ')':
-    case ',': //
-    case '}':
-    {
+    } else if(!strcmp(str, ";") ||
+              !strcmp(str, ")") ||
+              !strcmp(str, ",") || //
+              !strcmp(str, "}")) {
+      // if t.type != OP_T ?
       push_Token(ts, t);
       return ast;
-    }
-    default:
-      warn("never come!!!(got: %s)(token type: %s)\n", show_char(c), show_TokenType(t.type));
+    } else {
+      warn("never come!!!(got: %s)(token type: %s)\n", str, show_TokenType(t.type));
       return NULL;
     }
   }
-  warn("reached to unreachable path");
+  warn("reached to unreachable path\n");
   return NULL; // never come
 }
 
