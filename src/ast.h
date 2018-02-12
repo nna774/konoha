@@ -72,6 +72,7 @@ typedef struct Bi_op {
 
 struct Type {
   char const* name;
+  int size;
   INTRUSIVE_LIST_HOOK(Type);
 };
 
@@ -156,7 +157,6 @@ struct Ast {
 };
 
 Env* new_Env();
-Type* new_Type(char const* name);
 Ast* make_ast(Env*, Tokens);
 Ast* make_ast_statement(Statement*);
 void print_ast(Ast const*);

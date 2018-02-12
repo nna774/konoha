@@ -7,6 +7,7 @@
 #include "ast.h"
 #include "utils.h"
 
+Type* new_Type(char const* name, int size);
 Ast* to_ast(AstType t, void*);
 Ast* parse_expr(Env* env, Tokens ts, int prio);
 Type* parse_type(Env* env, Tokens ts);
@@ -41,8 +42,8 @@ Env* new_Env_impl(Env* env) {
 
 Env* new_Env() {
   Env* const e = new_Env_impl(NULL);
-  Type* int_ = new_Type("int");
-  Type* char_ = new_Type("char");
+  Type* int_ = new_Type("int", 4);
+  Type* char_ = new_Type("char", 1);
   list_of_Type_append(e->types, int_);
   list_of_Type_append(e->types, char_);
   return e;
@@ -99,10 +100,11 @@ Block* new_Block(Env* env) {
   return b;
 }
 
-Type* new_Type(char const* name) {
+Type* new_Type(char const* name, int size) {
   assert(name != NULL);
   Type* const t = malloc(sizeof(Type));
   t->name = name;
+  t->size = size;
   init_Type_hook(t);
   return t;
 }
