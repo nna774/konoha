@@ -8,7 +8,7 @@ compile() {
 	echo "compilation fail"
 	exit -1
     fi
-    "$CC" tmp/out.s driver.c -o tmp/a.out
+    "$CC" tmp/out.s driver.c self_driver.s -o tmp/a.out
     if [ $? != 0 ]; then
 	echo "$CC fail"
 	exit -1
@@ -248,3 +248,5 @@ test "1111111111" "int main(){ int a; a = 10; while (a) { print_int(1); a = a - 
 test "1111111111" "int main(){ int a; a = 10; while (a) {if(a) print_int(1); a = a - 1;}}"
 test "1111111111" "int main(){ int a; a = 10; while (a) {if(a) { print_int(1); } a = a - 1;}}"
 test "1111111110" "int main(){ int a; a = 10; while (a) {if(a/2) { print_int(1); } else { print_int(0); } a = a - 1;}}"
+
+test "45" "int main(){ print_int(succ(succ(succ(id(return42()))))); }"

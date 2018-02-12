@@ -3,6 +3,7 @@
 /tmp
 /memwatch.log
 /core
+self_driver.s
 
 # Prerequisites
 *.d

@@ -26,10 +26,13 @@ clean_debug:
 	$(MAKE) -C $(DEBUGDIR) clean
 
 clean_without_target: clean_src
-	$(RM) *.o ./$(TMPDIR)/*
+	$(RM) *.o *.s ./$(TMPDIR)/*
 
-test: $(TARGET)
+test: $(TARGET) self_driver.s
 	mkdir -p "$(TMPDIR)"
 	CC=$(CC) ./test.sh
 
-.PHONY: clean clean_src test
+self_driver.s:
+	./$(TARGET) self_driver.c -o self_driver.s
+
+.PHONY: clean clean_src test self_driver.s

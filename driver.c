@@ -8,10 +8,6 @@ int id(int n) {
   return n;
 }
 
-int succ(int n) {
-  return n + 1;
-}
-
 int add(int n, int m) {
   return n + m;
 }
