@@ -198,6 +198,11 @@ int round16(int n) {
   return (n / 16 + 1) * 16;
 }
 
+void assign_parameter(FILE* outfile, int argn, Var** args) {
+  char const* const reg = REGS[argn];
+  fprintf(outfile, "\tmov %%%s, -%d(%%rbp)\n", reg, args[argn]->offset);
+}
+
 void emit_func(FILE* outfile, Ast const* ast, Env const* env) {
   assert(ast != NULL);
   assert(ast->type == AST_FUNDEFIN);
@@ -215,6 +220,9 @@ void emit_func(FILE* outfile, Ast const* ast, Env const* env) {
     , func->name
     , stack
   );
+  for(int i = 0; i < func->type.argc; ++i) {
+    assign_parameter(outfile, i, func->args);
+  }
   emit_ast(outfile, func->body, env, var_cnt);
   fprintf(outfile, "\tmovq %%rbp, %%rsp\n");
   fprintf(outfile, "\tpopq %%rbp\n");
