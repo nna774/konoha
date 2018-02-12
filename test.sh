@@ -30,6 +30,7 @@ test() {
 	echo "Test failed: expected $expected, but got $res"
 	exit -1
     fi
+    : ok
 }
 
 test_ast() {
