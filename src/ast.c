@@ -40,7 +40,12 @@ Env* new_Env_impl(Env* env) {
 }
 
 Env* new_Env() {
-  return new_Env_impl(NULL);
+  Env* const e = new_Env_impl(NULL);
+  Type* int_ = new_Type("int");
+  Type* char_ = new_Type("char");
+  list_of_Type_append(e->types, int_);
+  list_of_Type_append(e->types, char_);
+  return e;
 }
 
 Env* expand_Env(Env* parent) {
