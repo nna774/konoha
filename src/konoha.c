@@ -45,6 +45,7 @@ void emit_ast_impl(FILE* outfile, Ast const* ast, Env const* env, int depth, cha
     break;
   case AST_OP_PLUS:
   case AST_OP_MULTI:
+  case AST_OP_EQUAL:
   {
     char const * const op = op_from_type(t);
     char op_with_suffix[MAX_OP_LEN];
@@ -54,6 +55,11 @@ void emit_ast_impl(FILE* outfile, Ast const* ast, Env const* env, int depth, cha
     fprintf(outfile, "\tmov %%eax, -%d(%%rbp)\n", offset);
     emit_ast_impl(outfile, ast->bi_op.rhs, env, depth + 2, NULL);
     fprintf(outfile, "\t%s -%d(%%rbp), %%eax\n", op_with_suffix, offset);
+    if(t == AST_OP_EQUAL) {
+      fprintf(outfile,
+              "\tsete %%al\n"
+              "\tmovzbl %%al, %%eax\n");
+    }
     if(strcmp(to, "%eax")) {
       fprintf(outfile, "\tmov %%eax, %s\n", to);
     }

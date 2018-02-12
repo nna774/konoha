@@ -250,3 +250,8 @@ test "1111111111" "int main(){ int a; a = 10; while (a) {if(a) { print_int(1); }
 test "1111111110" "int main(){ int a; a = 10; while (a) {if(a/2) { print_int(1); } else { print_int(0); } a = a - 1;}}"
 
 test "45" "int main(){ print_int(succ(succ(succ(id(return42()))))); }"
+
+test "1" "int f(int n) { if(n == 42) { return 1; } else { return 2; }}
+int main() { print_int(f(42)); }"
+test "2" "int f(int n) { if(n == 42) { return 1; } else { return 2; }}
+int main() { print_int(f(0)); }"

@@ -133,6 +133,8 @@ char const * op_from_type(AstType t) {
     return "imul";
   case AST_OP_DIV:
     return "idivl";
+  case AST_OP_EQUAL:
+    return "cmp";
   default:
     warn("wrong type(%d)\n", t);
     return ";";
@@ -461,6 +463,10 @@ Ast* parse_expr(Env* env, Tokens ts, int prio) {
       assert(lhs->type == AST_SYM);
       lhs->var->initialized = true;
       ast = make_ast_bi_op(AST_OP_ASSIGN, lhs, rhs);
+    } else if(!strcmp(str, "==")) {
+      Ast* const lhs = ast;
+      Ast* const rhs = parse_expr(env, ts, prio);
+      ast = make_ast_bi_op(AST_OP_EQUAL, lhs, rhs);
     } else if(!strcmp(str, ";") ||
               !strcmp(str, ")") ||
               !strcmp(str, ",") || //
@@ -743,6 +749,7 @@ void print_ast(Ast const* ast) {
   case AST_OP_MINUS:
   case AST_OP_MULTI:
   case AST_OP_DIV:
+  case AST_OP_EQUAL:
     printf("(%s ", op_from_type(t));
     print_ast(ast->bi_op.lhs);
     printf(" ");
