@@ -223,7 +223,7 @@ void emit_func(FILE* outfile, Ast const* ast, Env const* env) {
   for(int i = 0; i < func->type.argc; ++i) {
     assign_parameter(outfile, i, func->args);
   }
-  emit_ast(outfile, func->body, env, var_cnt);
+  emit_ast(outfile, func->body, env, var_cnt + func->type.argc);
   fprintf(outfile, "\tmovq %%rbp, %%rsp\n");
   fprintf(outfile, "\tpopq %%rbp\n");
   fprintf(outfile, "\tret\n");
