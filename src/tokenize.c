@@ -110,6 +110,20 @@ Token* read_integer(FILE* fp) {
   return new_Token(str, INTEGER_LITERAL_T);
 }
 
+Token* read_character(FILE* fp) {
+  getc(fp);
+  int c;
+  String str = new_String();
+  while(c = getc(fp), c != '\'') {
+    if(c == '\\') {
+      warn("unimpled yet!\n");
+    } else {
+      append_char(str, c);
+    }
+  }
+  return new_Token(str, CHARACTER_LITERAL_T);
+}
+
 Token* read_paren_impl(FILE* fp, bool open) {
   int c = getc(fp);
   assert(is_open_paren(c) || is_close_paren(c));
@@ -177,6 +191,8 @@ Token* read_token(FILE* fp) {
   } else if(c == ';') {
     getc(fp);
     t = new_Token(from_char(';'), SEMICOLON_T);
+  } else if(c == '\'') {
+    t = read_character(fp);
   } else {
     printf("got %s\n", show_char(c));
   }

@@ -255,3 +255,10 @@ test "1" "int f(int n) { if(n == 42) { return 1; } else { return 2; }}
 int main() { print_int(f(42)); }"
 test "2" "int f(int n) { if(n == 42) { return 1; } else { return 2; }}
 int main() { print_int(f(0)); }"
+
+test "1" "int main() {
+  char a;
+  a = '1';
+  print_int(a - '0');
+  return 0;
+}"

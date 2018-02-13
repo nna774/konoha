@@ -264,7 +264,6 @@ Ast* make_global(INTRUSIVE_LIST_OF(Ast) asts) {
   return to_ast(AST_GLOBAL, asts);
 }
 
-
 Type* find_type_by_name(Env const* env, char const* name) {
   assert(env->types != NULL);
   FOREACH(Type, env->types, t) {
@@ -319,6 +318,11 @@ Ast* parse_int(Token t, int sign) {
   return make_ast_int(sum * sign);
 }
 
+Ast* parse_char(Token t) {
+  assert(t.type == CHARACTER_LITERAL_T);
+  return make_ast_int(head_char(t.string));
+}
+
 Ast* parse_symbol_or_funcall(Env* env, Tokens ts) {
   char const* name = c_str(pop_Token(ts).string);
   Token const token = peek_Token(ts);
@@ -344,6 +348,9 @@ Ast* parse_prim(Env* env, Tokens ts) {
     pop_Token(ts);
     int const sign = 1;
     return parse_int(t, sign);
+  } else if(t.type == CHARACTER_LITERAL_T) {
+    pop_Token(ts);
+    return parse_char(t);
   } else if(t.type == IDENTIFIER_T) {
     return parse_symbol_or_funcall(env, ts);
   } else if(t.type == OPEN_PAREN_T && c == '(') {
@@ -655,7 +662,9 @@ Type* parse_type(Env* env, Tokens ts) {
     };
     for(int i = 0; i < (int)(sizeof(types)/sizeof(*types)); ++i) {
       if(!strcmp(str, types[i])) {
-        return find_type_by_name(env, types[i]);
+        Type* const type = find_type_by_name(env, types[i]);
+        assert(type != NULL);
+        return type;
       }
     }
     assert("never come!(unimpled");
