@@ -262,3 +262,10 @@ test "1" "int main() {
   print_int(a - '0');
   return 0;
 }"
+
+test "a" "int main() {
+  char a;
+  a = 'a';
+  print_char(a);
+  return 0;
+}"
