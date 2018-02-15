@@ -15,6 +15,8 @@
 #define _CONCAT_I(x, y) x ## y
 #define CONCAT3(x, y, z) _CONCAT3_I(x, y, z)
 #define _CONCAT3_I(x, y, z) x ## y ## z
+#define CONCAT4(x, y, z, w) _CONCAT4_I(x, y, z, w)
+#define _CONCAT4_I(x, y, z, w) x ## y ## z ## w
 
 int peek(FILE* fp);
 void skip(FILE* fp);
