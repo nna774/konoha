@@ -7,6 +7,12 @@
 #include "ast.h"
 #include "utils.h"
 
+struct Env {
+  Env* parent;
+  INTRUSIVE_LIST_OF(Var) vars;
+  INTRUSIVE_LIST_OF(Type) types;
+};
+
 Type* new_Type(char const* name, int size);
 Ast* to_ast(AstType t, void*);
 Ast* parse_expr(Env* env, Tokens ts, int prio);
@@ -126,6 +132,10 @@ Global* new_Global() {
   Global* const g = malloc(sizeof(Global));
   g->list = new_list_of_Ast();
   return g;
+}
+
+int var_count(Env const* env) {
+  return list_of_Var_length(env->vars); //
 }
 
 int const MAX_BUF_LEN = 256;

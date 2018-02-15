@@ -210,7 +210,7 @@ void emit_func(FILE* outfile, Ast const* ast, Env const* env) {
   assert(ast != NULL);
   assert(ast->type == AST_FUNDEFIN);
   FunDef const* const func = ast->fundef;
-  int const var_cnt = list_of_Var_length(env->vars) + 1;
+  int const var_cnt = var_count(env) + 1;
   int const stack = round16(var_cnt * 4);
   fprintf(
     outfile,

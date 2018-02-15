@@ -85,12 +85,6 @@ struct Var {
   INTRUSIVE_LIST_HOOK(Var);
 };
 
-struct Env {
-  Env* parent;
-  INTRUSIVE_LIST_OF(Var) vars;
-  INTRUSIVE_LIST_OF(Type) types;
-};
-
 struct Statement {
   StatementType type;
   union {
@@ -159,6 +153,7 @@ struct Ast {
 Env* new_Env();
 Ast* make_ast(Env*, Tokens);
 Ast* make_ast_statement(Statement*);
+int var_count(Env const*);
 void print_ast(Ast const*);
 void print_env(Env const*);
 char const * op_from_type(AstType t);
