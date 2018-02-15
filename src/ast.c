@@ -15,7 +15,7 @@ struct Env {
 
 Type* new_Type(char const* name, int size);
 Ast* to_ast(AstType t, void*);
-Ast* parse_expr(Env* env, Tokens ts, int prio);
+Ast* parse_expr(Env* env, Tokens ts);
 Type* parse_type(Env* env, Tokens ts);
 Ast* parse_funcall(Env* env, Tokens ts, char const* name);
 Ast* parse_block(Env* env, Tokens ts);
@@ -365,8 +365,7 @@ Ast* parse_prim(Env* env, Tokens ts) {
     return parse_symbol_or_funcall(env, ts);
   } else if(t.type == OPEN_PAREN_T && c == '(') {
     pop_Token(ts);
-    int const prio = 0;
-    Ast* const ast = parse_expr(env, ts, prio);
+    Ast* const ast = parse_expr(env, ts);
     Token const t2 = pop_Token(ts);
     char const c2 = head_char(t2.string);
     if(t2.type != CLOSE_PAREN_T || c2 != ')') {
@@ -382,8 +381,7 @@ Ast* parse_prim(Env* env, Tokens ts) {
       pop_Token(ts);
       return parse_int(t2, c == '+' ? 1 : -1);
     }
-    int const prio = 0;
-    Ast* const subseq = parse_expr(env, ts, prio);
+    Ast* const subseq = parse_expr(env, ts);
     if(c == '+') {
       return subseq;
     }
@@ -412,8 +410,7 @@ Ast* parse_funcall(Env* env, Tokens ts, char const* name) {
     }
     if(argc == 0) { continue; }
     if(t.type == EOF_T) { warn("unexpected EOF\n"); return NULL; }
-    int const prio = 0;
-    args[argc - 1] = parse_expr(env, ts, prio);
+    args[argc - 1] = parse_expr(env, ts);
     t = pop_Token(ts);
     if(t.type == EOF_T) { warn("unexpected EOF\n"); return NULL; }
     if(head_char(t.string) == ')') { break; }
@@ -461,7 +458,7 @@ bool compare_with_name(Var* lhs, Var* rhs) {
   return !strcmp(lhs->name, rhs->name);
 }
 
-Ast* parse_expr(Env* env, Tokens ts, int prio) {
+Ast* parse_expr_imp(Env* env, Tokens ts, int prio) {
   Ast* ast = parse_prim(env, ts);
   assert(ast != NULL);
   while(true) {
@@ -483,17 +480,17 @@ Ast* parse_expr(Env* env, Tokens ts, int prio) {
       }
       AstType const type = detect_bi_op(c);
       Ast* const lhs = ast;
-      Ast* const rhs = parse_expr(env, ts, c_prio + 1);
+      Ast* const rhs = parse_expr_imp(env, ts, c_prio + 1);
       ast = make_ast_bi_op(type, lhs, rhs);
     } else if(!strcmp(str, "=")) {
       Ast* const lhs = ast;
-      Ast* const rhs = parse_expr(env, ts, prio);
+      Ast* const rhs = parse_expr_imp(env, ts, prio);
       assert(lhs->type == AST_SYM);
       lhs->var->initialized = true;
       ast = make_ast_bi_op(AST_OP_ASSIGN, lhs, rhs);
     } else if(!strcmp(str, "==")) {
       Ast* const lhs = ast;
-      Ast* const rhs = parse_expr(env, ts, prio);
+      Ast* const rhs = parse_expr_imp(env, ts, prio);
       ast = make_ast_bi_op(AST_OP_EQUAL, lhs, rhs);
     } else {
       warn("never come!!!(got: %s)(token type: %s)\n", str, show_TokenType(t.type));
@@ -502,6 +499,10 @@ Ast* parse_expr(Env* env, Tokens ts, int prio) {
   }
   warn("reached to unreachable path\n");
   return NULL; // never come
+}
+
+Ast* parse_expr(Env* env, Tokens ts) {
+  return parse_expr_imp(env, ts, 0);
 }
 
 bool parse_semicolon(Tokens ts) {
@@ -538,8 +539,7 @@ Statement* parse_if_statement(Env* env, Tokens ts) {
     warn("unexpected token %s\n", c_str(t.string));
     return NULL;
   }
-  int const prio = 0;
-  Ast* cond = parse_expr(env, ts, prio);
+  Ast* cond = parse_expr(env, ts);
   t = pop_Token(ts);
   if(t.type != CLOSE_PAREN_T || head_char(t.string) != ')') {
     warn("unexpected token %s\n", c_str(t.string));
@@ -561,8 +561,7 @@ Statement* parse_while_statement(Env* env, Tokens ts) {
     warn("unexpected token %s\n", c_str(t.string));
     return NULL;
   }
-  int const prio = 0;
-  Ast* cond = parse_expr(env, ts, prio);
+  Ast* cond = parse_expr(env, ts);
   t = pop_Token(ts);
   if(t.type != CLOSE_PAREN_T || head_char(t.string) != ')') {
     warn("unexpected token %s\n", c_str(t.string));
@@ -611,10 +610,8 @@ Statement* parse_statement(Env* env, Tokens ts) {
     return parse_while_statement(env, ts);
   }
 
-  int const prio = 0;
-  Ast* const ast = parse_expr(env, ts, prio);
+  Ast* const ast = parse_expr(env, ts);
   assert(ast != NULL);
-
 
   if(!parse_semicolon(ts)) {
     return NULL;
