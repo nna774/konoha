@@ -8,12 +8,7 @@
 ENUM_WITH_SHOW(
   AstType,
   AST_INT,
-  AST_OP_PLUS,
-  AST_OP_MINUS,
-  AST_OP_MULTI,
-  AST_OP_DIV,
-  AST_OP_ASSIGN,
-  AST_OP_EQUAL,
+  AST_BI_OP,
   AST_SYM,
   AST_SYM_DECLER,
   AST_SYM_DEFINE,
@@ -68,6 +63,7 @@ DEFINE_INTRUSIVE_LIST(Ast);
 typedef struct Bi_op {
   Ast const* lhs;
   Ast const* rhs;
+  TokenType op_type;
 } Bi_op;
 
 struct Type {
@@ -156,6 +152,6 @@ Ast* make_ast_statement(Statement*);
 int var_count(Env const*);
 void print_ast(Ast const*);
 void print_env(Env const*);
-char const * op_from_type(AstType t);
+char const * op_from_type(TokenType t);
 
 #endif // NNA774_KONOHA_AST_H

@@ -3,6 +3,8 @@
 #include <string.h>
 #include "emit.h"
 
+void emit_ast_impl(FILE* outfile, Ast const* ast, Env const* env, int depth, char const* to);
+
 char const* const REGS[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 int const MAX_REG_LEN = 16;
 int const MAX_OP_LEN = 16;
@@ -32,17 +34,12 @@ void emit_int_to(FILE* outfile, Ast const* ast, char const* reg) {
   fprintf(outfile, "\tmovl $%d, %s\n", ast->int_val, reg);
 }
 
-void emit_ast_impl(FILE* outfile, Ast const* ast, Env const* env, int depth, char const* to) {
-  if(to == NULL) { to = "%eax"; }
-  AstType const t = ast->type;
-  fprintf(outfile, "# begin of %s\n", show_AstType(t));
+void emit_bi_op(FILE* outfile, Ast const* ast, Env const* env, int depth, char const* to) {
+  TokenType const t = ast->bi_op.op_type;
   switch(t) {
-  case AST_INT:
-    emit_int_to(outfile, ast, to);
-    break;
-  case AST_OP_PLUS:
-  case AST_OP_MULTI:
-  case AST_OP_EQUAL:
+  case OP_PLUS_T:
+  case OP_MULTI_T:
+  case OP_EQUAL_T:
   {
     char const * const op = op_from_type(t);
     char op_with_suffix[MAX_OP_LEN];
@@ -52,7 +49,7 @@ void emit_ast_impl(FILE* outfile, Ast const* ast, Env const* env, int depth, cha
     fprintf(outfile, "\tmov %%eax, -%d(%%rbp)\n", offset);
     emit_ast_impl(outfile, ast->bi_op.rhs, env, depth + 2, NULL);
     fprintf(outfile, "\t%s -%d(%%rbp), %%eax\n", op_with_suffix, offset);
-    if(t == AST_OP_EQUAL) {
+    if(t == OP_EQUAL_T) {
       fprintf(outfile,
               "\tsete %%al\n"
               "\tmovzbl %%al, %%eax\n");
@@ -62,7 +59,7 @@ void emit_ast_impl(FILE* outfile, Ast const* ast, Env const* env, int depth, cha
     }
     break;
   }
-  case AST_OP_MINUS:
+  case OP_MINUS_T:
   {
     int const offset = depth * 4;
     emit_ast_impl(outfile, ast->bi_op.rhs, env, depth + 1, NULL);
@@ -74,7 +71,7 @@ void emit_ast_impl(FILE* outfile, Ast const* ast, Env const* env, int depth, cha
     }
     break;
   }
-  case AST_OP_DIV:
+  case OP_DIV_T:
   {
     int const offset = depth * 4;
     emit_ast_impl(outfile, ast->bi_op.rhs, env, depth + 1, NULL);
@@ -87,13 +84,30 @@ void emit_ast_impl(FILE* outfile, Ast const* ast, Env const* env, int depth, cha
     }
     break;
   }
-  case AST_OP_ASSIGN:
+  case OP_ASSIGN_T:
   {
     char reg[MAX_REG_LEN];
     snprintf(reg, MAX_REG_LEN, "-%d(%%rbp)", ast->bi_op.lhs->var->offset);
     emit_ast_impl(outfile, ast->bi_op.rhs, env, depth + 1, reg);
     break;
   }
+  default:
+    // never come
+    warn("unknown token type(%s)\n", show_TokenType(t));
+  }
+}
+
+void emit_ast_impl(FILE* outfile, Ast const* ast, Env const* env, int depth, char const* to) {
+  if(to == NULL) { to = "%eax"; }
+  AstType const t = ast->type;
+  fprintf(outfile, "# begin of %s\n", show_AstType(t));
+  switch(t) {
+  case AST_INT:
+    emit_int_to(outfile, ast, to);
+    break;
+  case AST_BI_OP:
+    emit_bi_op(outfile, ast, env, depth, to);
+    break;
   case AST_SYM:
     fprintf(outfile, "\tmov -%d(%%rbp), %s\n", ast->var->offset, to);
     break;

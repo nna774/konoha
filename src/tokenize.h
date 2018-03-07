@@ -12,7 +12,14 @@ ENUM_WITH_SHOW(
   CHARACTER_LITERAL_T,
   OPEN_PAREN_T,
   CLOSE_PAREN_T,
-  OP_T,
+  OP_PLUS_T,
+  OP_MINUS_T,
+  OP_MULTI_T,
+  OP_DIV_T,
+  OP_INC_T,
+  OP_DEC_T,
+  OP_EQUAL_T,
+  OP_ASSIGN_T,
   SEMICOLON_T,
   COMMA_T,
   KEYWORD_T,
@@ -41,5 +48,7 @@ void push_Token(Tokens, Token);
 Token peek_Token(Tokens);
 void print_Token(Token const*);
 void print_Tokens(INTRUSIVE_LIST_OF(Token));
+TokenType to_TokenType(char const* str);
+bool is_op(TokenType t);
 
 #endif // NNA774_KONOHA_TOKENIZE_H

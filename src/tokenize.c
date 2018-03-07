@@ -138,6 +138,53 @@ Token* read_close_paren(FILE* fp) {
   return read_paren_impl(fp, false);
 }
 
+bool is_op(TokenType t) {
+  TokenType ops[] = {
+    OP_PLUS_T,
+    OP_MINUS_T,
+    OP_MULTI_T,
+    OP_DIV_T,
+    OP_INC_T,
+    OP_DEC_T,
+    OP_EQUAL_T,
+    OP_ASSIGN_T,
+  };
+  for(int i = 0; i < (int)(sizeof(ops)/sizeof(t)); ++i) {
+    if(t == ops[i]) return true;
+  }
+  return false;
+}
+
+TokenType to_TokenType(char const* str) {
+  if(!strcmp(str, "+")) {
+    return OP_PLUS_T;
+  }
+  if(!strcmp(str, "-")) {
+    return OP_MINUS_T;
+  }
+  if(!strcmp(str, "*")) {
+    return OP_MULTI_T;
+  }
+  if(!strcmp(str, "/")) {
+    return OP_DIV_T;
+  }
+  if(!strcmp(str, "++")) {
+    return OP_INC_T;
+  }
+  if(!strcmp(str, "--")) {
+    return OP_DEC_T;
+  }
+  if(!strcmp(str, "==")) {
+    return OP_EQUAL_T;
+  }
+  if(!strcmp(str, "=")) {
+    return OP_ASSIGN_T;
+  }
+
+  warn("unknown token(%s)\n", str);
+  return UNKNOWN_T;
+}
+
 Token* read_operator_and_comment(FILE* fp) {
   int const c = getc(fp);
   if(c == '/') {
@@ -165,11 +212,12 @@ Token* read_operator_and_comment(FILE* fp) {
       int const next = peek(fp);
       if(next == twices[i][0]) {
         getc(fp);
-        return new_Token(to_String(2, twices[i]), OP_T);
+        return new_Token(to_String(2, twices[i]), to_TokenType(twices[i]));
       }
     }
   }
-  return new_Token(from_char(c), OP_T);
+  String s = from_char(c);
+  return new_Token(s, to_TokenType(c_str(s)));
 }
 
 Token* read_token(FILE* fp) {

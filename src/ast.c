@@ -140,17 +140,17 @@ int var_count(Env const* env) {
 
 int const MAX_BUF_LEN = 256;
 
-char const * op_from_type(AstType t) {
+char const * op_from_type(TokenType t) {
   switch(t) {
-  case AST_OP_PLUS:
+  case OP_PLUS_T:
     return "add";
-  case AST_OP_MINUS:
+  case OP_MINUS_T:
     return "sub";
-  case AST_OP_MULTI:
+  case OP_MULTI_T:
     return "imul";
-  case AST_OP_DIV:
+  case OP_DIV_T:
     return "idivl";
-  case AST_OP_EQUAL:
+  case OP_EQUAL_T:
     return "cmp";
   default:
     warn("wrong type(%d)\n", t);
@@ -171,11 +171,12 @@ Ast* make_ast_symbol_ref(Env* env, Var* var) {
   return to_ast(AST_SYM, v);
 }
 
-Ast* make_ast_bi_op(AstType const t, Ast const* lhs, Ast const* rhs) {
+Ast* make_ast_bi_op(TokenType const t, Ast const* lhs, Ast const* rhs) {
   Ast* const ast = new_Ast();
-  ast->type = t;
+  ast->type = AST_BI_OP;
   ast->bi_op.lhs = lhs;
   ast->bi_op.rhs = rhs;
+  ast->bi_op.op_type = t;
   return ast;
 }
 
@@ -387,7 +388,7 @@ Ast* parse_prim(Env* env, Tokens ts) {
     }
     // -
     Ast* const neg = make_ast_int(-1);
-    return make_ast_bi_op(AST_OP_MULTI, neg, subseq);
+    return make_ast_bi_op(OP_MULTI_T, neg, subseq);
   } else {
     if(t.type == EOF_T) { warn("unexpected EOF\n"); }
     else { warn("unknown token: %s\n", c_str(t.string)); }
@@ -438,22 +439,6 @@ int priority(char op) {
   }
 }
 
-AstType detect_bi_op(char c) {
-  switch(c) {
-  case '+':
-    return AST_OP_PLUS;
-  case '-':
-    return AST_OP_MINUS;
-  case '*':
-    return AST_OP_MULTI;
-  case '/':
-    return AST_OP_DIV;
-  default:
-    warn("unknown bi-op(got: %c)\n", c);
-    return AST_UNKNOWN;
-  }
-}
-
 bool compare_with_name(Var* lhs, Var* rhs) {
   return !strcmp(lhs->name, rhs->name);
 }
@@ -464,7 +449,7 @@ Ast* parse_expr_imp(Env* env, Tokens ts, int prio) {
   while(true) {
     Token const t = pop_Token(ts);
     char const* str = c_str(t.string);
-    if(t.type != OP_T) {
+    if(!is_op(t.type)) {
       push_Token(ts, t);
       return ast;
     }
@@ -478,7 +463,7 @@ Ast* parse_expr_imp(Env* env, Tokens ts, int prio) {
         push_Token(ts, t);
         return ast;
       }
-      AstType const type = detect_bi_op(c);
+      TokenType const type = to_TokenType(c_str(t.string));
       Ast* const lhs = ast;
       Ast* const rhs = parse_expr_imp(env, ts, c_prio + 1);
       ast = make_ast_bi_op(type, lhs, rhs);
@@ -487,11 +472,11 @@ Ast* parse_expr_imp(Env* env, Tokens ts, int prio) {
       Ast* const rhs = parse_expr_imp(env, ts, prio);
       assert(lhs->type == AST_SYM);
       lhs->var->initialized = true;
-      ast = make_ast_bi_op(AST_OP_ASSIGN, lhs, rhs);
+      ast = make_ast_bi_op(OP_ASSIGN_T, lhs, rhs);
     } else if(!strcmp(str, "==")) {
       Ast* const lhs = ast;
       Ast* const rhs = parse_expr_imp(env, ts, prio);
-      ast = make_ast_bi_op(AST_OP_EQUAL, lhs, rhs);
+      ast = make_ast_bi_op(OP_EQUAL_T, lhs, rhs);
     } else {
       warn("never come!!!(got: %s)(token type: %s)\n", str, show_TokenType(t.type));
       return NULL;
@@ -758,6 +743,23 @@ Ast* make_ast(Env* env, Tokens ts) {
   return ast;
 }
 
+void print_bi_op(Ast const* ast) {
+  assert(ast->type == AST_BI_OP);
+  TokenType const t = ast->bi_op.op_type;
+  if(t == OP_ASSIGN_T) {
+    assert(ast->bi_op.lhs->type == AST_SYM);
+    printf("(let %s ", ast->bi_op.lhs->var->name);
+    print_ast(ast->bi_op.rhs);
+    printf(")");
+  } else {
+    printf("(%s ", op_from_type(t));
+    print_ast(ast->bi_op.lhs);
+    printf(" ");
+    print_ast(ast->bi_op.rhs);
+    printf(")");
+  }
+}
+
 void print_ast(Ast const* ast) {
   assert(ast != NULL);
   AstType const t = ast->type;
@@ -765,16 +767,8 @@ void print_ast(Ast const* ast) {
   case AST_INT:
     printf("%d", ast->int_val);
     break;
-  case AST_OP_PLUS:
-  case AST_OP_MINUS:
-  case AST_OP_MULTI:
-  case AST_OP_DIV:
-  case AST_OP_EQUAL:
-    printf("(%s ", op_from_type(t));
-    print_ast(ast->bi_op.lhs);
-    printf(" ");
-    print_ast(ast->bi_op.rhs);
-    printf(")");
+  case AST_BI_OP:
+    print_bi_op(ast);
     break;
   case AST_SYM:
     if(!ast->var->initialized) {
@@ -787,12 +781,6 @@ void print_ast(Ast const* ast) {
     break;
   case AST_SYM_DEFINE:
     printf("(defvar %s)", ast->var->name);
-    break;
-  case AST_OP_ASSIGN:
-    assert(ast->bi_op.lhs->type == AST_SYM);
-    printf("(let %s ", ast->bi_op.lhs->var->name);
-    print_ast(ast->bi_op.rhs);
-    printf(")");
     break;
   case AST_STATEMENT:
     switch(ast->statement->type) {
