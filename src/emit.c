@@ -11,7 +11,7 @@ int const MAX_OP_LEN = 16;
 int const MAX_LABEL_LEN = 8;
 
 char const* make_label() {
-  int static cnt = 0;
+  static int cnt = 0;
   char* const l = malloc(MAX_LABEL_LEN);
   snprintf(l, MAX_LABEL_LEN, ".L%d", cnt++);
   return l;
